@@ -1,0 +1,4 @@
+# Ignore files and directories that are not part of the project
+
+# Ignore the .github directory
+/.github/

@@ -72,6 +72,13 @@ enum class ErrorCode : u32 {
     CORE_INVALID_ARGUMENT = 1002,
     CORE_FILE_NOT_FOUND = 1003,
     CORE_FILE_IO_ERROR = 1004,
+    CORE_TIMEOUT = 1005,
+    CORE_INITIALIZATION_FAILED = 1006,
+    
+    // Generic errors
+    INVALID_ARGUMENT = 1002,  // Alias for CORE_INVALID_ARGUMENT
+    TIMEOUT = 1005,  // Alias for CORE_TIMEOUT
+    INITIALIZATION_FAILED = 1006,  // Alias for CORE_INITIALIZATION_FAILED
     
     // Vulkan module errors (2000-2999)
     VULKAN_UNKNOWN = 2000,
@@ -80,6 +87,7 @@ enum class ErrorCode : u32 {
     VULKAN_OUT_OF_MEMORY = 2003,
     VULKAN_SURFACE_LOST = 2004,
     VULKAN_SWAPCHAIN_OUT_OF_DATE = 2005,
+    VULKAN_OPERATION_FAILED = 2006,
     
     // Scene module errors (3000-3999)
     SCENE_UNKNOWN = 3000,

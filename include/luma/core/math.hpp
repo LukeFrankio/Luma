@@ -24,6 +24,9 @@
 
 #include <luma/core/types.hpp>
 
+// enable GLM experimental extensions (quaternion, norm, etc.)
+#define GLM_ENABLE_EXPERIMENTAL
+
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>

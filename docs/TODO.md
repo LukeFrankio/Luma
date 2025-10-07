@@ -121,90 +121,126 @@
 
 ### Vulkan Backend Module (`luma_vulkan`)
 
-- [ ] Fetch Vulkan SDK
-  - [ ] Use `find_package(Vulkan REQUIRED)` in CMake
-  - [ ] Verify Vulkan 1.3 support
-- [ ] Fetch VMA (Vulkan Memory Allocator)
-  - [ ] Use FetchContent to download from GitHub
-  - [ ] Include VMA header (single-header library)
-- [ ] Create `include/luma/vulkan/instance.h`
-  - [ ] Define `Instance` class
-  - [ ] Add methods: `create()`, `destroy()`, `get_handle()`
-- [ ] Create `src/vulkan/instance.cpp`
-  - [ ] Implement instance creation with validation layers
-  - [ ] Enable `VK_LAYER_KHRONOS_validation` in debug
-  - [ ] Set up debug messenger callback
-  - [ ] Query available extensions
-- [ ] Create `include/luma/vulkan/device.h`
-  - [ ] Define `Device` class
-  - [ ] Add methods: `create()`, `destroy()`, `get_handle()`
-  - [ ] Store queue families (graphics, compute, transfer)
-- [ ] Create `src/vulkan/device.cpp`
-  - [ ] Implement physical device selection (prefer discrete GPU, fallback to iGPU)
-  - [ ] Query device features (Vulkan 1.3 features)
-  - [ ] Create logical device with required features
-  - [ ] Get queue handles (graphics queue, compute queue)
-- [ ] Create `include/luma/vulkan/swapchain.h`
-  - [ ] Define `Swapchain` class
-  - [ ] Add methods: `create()`, `destroy()`, `acquire_next_image()`, `present()`
-- [ ] Create `src/vulkan/swapchain.cpp`
-  - [ ] Query surface capabilities
-  - [ ] Select surface format (prefer SRGB)
-  - [ ] Select present mode (prefer MAILBOX, fallback to FIFO)
-  - [ ] Create swapchain with triple buffering
-  - [ ] Create image views for swapchain images
-- [ ] Create `include/luma/vulkan/command_buffer.h`
-  - [ ] Define `CommandBuffer` class (functional wrapper)
-  - [ ] Add methods: `begin()`, `end()`, `submit()`
-- [ ] Create `src/vulkan/command_buffer.cpp`
-  - [ ] Create command pool
-  - [ ] Allocate command buffers
-  - [ ] Implement recording helpers
-- [ ] Create `include/luma/vulkan/sync.h`
-  - [ ] Define `Fence` wrapper
-  - [ ] Define `Semaphore` wrapper
-  - [ ] Define `Barrier` helpers
-- [ ] Create `src/vulkan/sync.cpp`
-  - [ ] Implement fence creation/waiting
-  - [ ] Implement semaphore creation
-  - [ ] Implement pipeline barrier helpers
-- [ ] Create `include/luma/vulkan/memory.h`
-  - [ ] Define `Buffer` class (uses VMA)
-  - [ ] Define `Image` class (uses VMA)
-  - [ ] Add memory allocation helpers
-- [ ] Create `src/vulkan/memory.cpp`
-  - [ ] Initialize VMA allocator
-  - [ ] Implement buffer creation (uniform, storage, staging)
-  - [ ] Implement image creation (storage images for compute)
-  - [ ] Handle unified memory on iGPU (HOST_VISIBLE | DEVICE_LOCAL)
-- [ ] Create `CMakeLists.txt` for vulkan module
-  - [ ] Define `luma_vulkan` target (DLL)
-  - [ ] Link Vulkan::Vulkan
-  - [ ] Link VMA (header-only)
-  - [ ] Link `luma_core`
+- [x] Fetch Vulkan SDK
+  - [x] Use `find_package(Vulkan REQUIRED)` in CMake
+  - [x] Verify Vulkan 1.3 support (SDK 1.4.321 found)
+- [x] Fetch VMA (Vulkan Memory Allocator)
+  - [x] Use FetchContent to download from GitHub (v3.1.0)
+  - [x] Include VMA header (single-header library)
+- [x] Create `include/luma/vulkan/instance.hpp`
+  - [x] Define `Instance` class with RAII semantics
+  - [x] Add methods: `create()`, `handle()`, `validation_layers()`, `has_validation()`
+  - [x] Comprehensive Doxygen documentation
+- [x] Create `src/vulkan/instance.cpp`
+  - [x] Implement instance creation with validation layers
+  - [x] Enable `VK_LAYER_KHRONOS_validation` in debug
+  - [x] Set up debug messenger callback
+  - [x] Query available extensions
+  - [x] Platform-specific surface extensions (Win32/Xlib)
+- [x] Create `include/luma/vulkan/device.hpp`
+  - [x] Define `Device` class with RAII semantics
+  - [x] Define `QueueFamilyIndices` struct
+  - [x] Add methods: `create()`, `handle()`, `physical_device()`, queue accessors
+  - [x] Store queue families (graphics, compute, transfer, present)
+- [x] Create `src/vulkan/device.cpp`
+  - [x] Implement physical device selection (prefer discrete GPU, fallback to iGPU)
+  - [x] Query device features (Vulkan 1.3 features)
+  - [x] Create logical device with required features
+  - [x] Get queue handles (graphics, compute, transfer, present queues)
+  - [x] Device scoring algorithm for best GPU selection
+- [x] Create `include/luma/vulkan/swapchain.hpp`
+  - [x] Define `Swapchain` class with RAII semantics
+  - [x] Define `SwapchainSupportDetails` struct
+  - [x] Add methods: `create()`, `acquire_next_image()`, `present()`
+- [x] Create `src/vulkan/swapchain.cpp`
+  - [x] Query surface capabilities
+  - [x] Select surface format (prefer SRGB)
+  - [x] Select present mode (prefer MAILBOX, fallback to FIFO)
+  - [x] Create swapchain with triple buffering
+  - [x] Create image views for swapchain images
+  - [x] Handle OUT_OF_DATE errors for window resize
+- [x] Create `include/luma/vulkan/command_buffer.hpp`
+  - [x] Define `CommandPool` class with RAII semantics
+  - [x] Define `CommandBuffer` class (functional wrapper)
+  - [x] Add methods: `begin()`, `end()`, `submit()`, `submit_and_wait()`
+- [x] Create `src/vulkan/command_buffer.cpp`
+  - [x] Create command pool with flags
+  - [x] Allocate command buffers (single and multiple)
+  - [x] Implement recording helpers
+  - [x] Submit with semaphores and fences
+- [x] Create `include/luma/vulkan/sync.hpp`
+  - [x] Define `Fence` wrapper with RAII
+  - [x] Define `Semaphore` wrapper with RAII
+  - [x] Define barrier helpers (image, buffer, memory)
+- [x] Create `src/vulkan/sync.cpp`
+  - [x] Implement fence creation/waiting/reset
+  - [x] Implement semaphore creation
+  - [x] Implement pipeline barrier helpers
+  - [x] Implement transition_image_layout helper
+- [x] Create `include/luma/vulkan/memory.hpp`
+  - [x] Define `Allocator` class (VMA wrapper)
+  - [x] Define `Buffer` class (uses VMA) with template helpers
+  - [x] Define `Image` class (uses VMA)
+  - [x] Add memory allocation helpers (create_with_data, map_and_write, map_and_read)
+- [x] Create `src/vulkan/memory.cpp`
+  - [x] Initialize VMA allocator with Vulkan 1.3 support
+  - [x] Implement buffer creation (uniform, storage, staging)
+  - [x] Implement image creation (storage images for compute)
+  - [x] Handle unified memory on iGPU (HOST_VISIBLE | DEVICE_LOCAL)
+  - [x] Implement map/unmap, flush/invalidate operations
+  - [x] Helper functions: copy_buffer, copy_buffer_to_image, copy_image_to_buffer
+- [x] Create `CMakeLists.txt` for vulkan module
+  - [x] Define `luma_vulkan` target (static library)
+  - [x] Link Vulkan::Vulkan
+  - [x] Link VMA (header-only)
+  - [x] Link `luma_core`
+  - [x] Apply compiler warnings and sanitizers
+- [x] Build verification
+  - [x] Zero compilation warnings
+  - [x] Zero compilation errors
+  - [x] Library created: `libluma_vulkan.a` (23.1 MB)
 
 ### Window + Input Module (`luma_input`)
 
-- [ ] Fetch GLFW
-  - [ ] Use `find_package(glfw3)` or FetchContent
-- [ ] Create `include/luma/input/window.h`
-  - [ ] Define `Window` class
-  - [ ] Add methods: `create()`, `destroy()`, `should_close()`, `poll_events()`
-- [ ] Create `src/input/window.cpp`
-  - [ ] Initialize GLFW
-  - [ ] Create window with Vulkan surface
-  - [ ] Set up framebuffer resize callback
-- [ ] Create `include/luma/input/input.h`
-  - [ ] Define `Input` class
-  - [ ] Add keyboard/mouse query methods: `is_key_pressed()`, `get_mouse_pos()`
-- [ ] Create `src/input/input.cpp`
-  - [ ] Implement GLFW input polling
-  - [ ] Store key/button states
-  - [ ] Handle mouse movement
-- [ ] Create `CMakeLists.txt` for input module
-  - [ ] Define `luma_input` target (DLL)
-  - [ ] Link GLFW
-  - [ ] Link `luma_core`
+- [x] Fetch GLFW
+  - [x] Use FetchContent (configured in FetchDependencies.cmake)
+- [x] Create `include/luma/input/window.hpp`
+  - [x] Define `Window` class with RAII semantics
+  - [x] Add methods: `create()`, `should_close()`, `poll_events()`
+  - [x] Add window query methods: `width()`, `height()`, `framebuffer_width()`, `framebuffer_height()`
+  - [x] Add `is_minimized()`, `wait_while_minimized()`
+  - [x] Add `set_resize_callback()` for framebuffer resize events
+  - [x] Add `create_surface()` for Vulkan surface creation
+  - [x] Comprehensive Doxygen documentation
+- [x] Create `src/input/window.cpp`
+  - [x] Initialize GLFW (with automatic cleanup via atexit)
+  - [x] Create window with Vulkan surface support
+  - [x] Set up framebuffer resize callback forwarding
+  - [x] Implement window query functions (width, height, minimize state)
+  - [x] Implement Vulkan surface creation via glfwCreateWindowSurface
+- [x] Create `include/luma/input/input.hpp`
+  - [x] Define `Input` class with functional query interface
+  - [x] Add keyboard query methods: `is_key_pressed()`, `is_key_just_pressed()`, `is_key_just_released()`
+  - [x] Add mouse button query methods: `is_mouse_button_pressed()`, etc.
+  - [x] Add mouse position/delta methods: `mouse_position()`, `mouse_delta()`, `mouse_scroll()`
+  - [x] Add `set_cursor_mode()` for cursor capture (FPS mode)
+  - [x] Comprehensive Doxygen documentation
+- [x] Create `src/input/input.cpp`
+  - [x] Implement GLFW input polling (keyboard + mouse)
+  - [x] Store current and previous frame state (for edge detection)
+  - [x] Handle mouse movement and delta calculation
+  - [x] Implement scroll callback (accumulate scroll events over frame)
+  - [x] Implement edge detection (just-pressed/just-released queries)
+- [x] Create `CMakeLists.txt` for input module
+  - [x] Define `luma_input` target (static library)
+  - [x] Link GLFW
+  - [x] Link `luma_core` (for types, logging, math)
+  - [x] Link Vulkan::Vulkan (for VkSurfaceKHR)
+  - [x] Apply compiler warnings and sanitizers
+- [x] Build verification
+  - [x] Zero compilation warnings
+  - [x] Zero compilation errors
+  - [x] Library created: `libluma_input.a` (3.6 MB)
 
 ### ImGui Integration
 

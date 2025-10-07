@@ -10,8 +10,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Build options
 option(LUMA_BUILD_TESTS "Build Google Test suites" ON)
-option(LUMA_ENABLE_ASAN "Enable AddressSanitizer in debug builds" ON)
-option(LUMA_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer in debug builds" ON)
+option(LUMA_ENABLE_ASAN "Enable AddressSanitizer in debug builds" OFF)  # disabled due to GCC 15 linking issues on Windows
+option(LUMA_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer in debug builds" OFF)  # disabled due to GCC 15 linking issues on Windows
 option(LUMA_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 
 # Output directories
@@ -50,10 +50,10 @@ endif()
 
 # Add subdirectories (will be uncommented as modules are created)
 add_subdirectory(src/core)
-# add_subdirectory(src/vulkan)
+add_subdirectory(src/vulkan)
+add_subdirectory(src/input)
 # add_subdirectory(src/scene)
 # add_subdirectory(src/asset)
-# add_subdirectory(src/input)
 # add_subdirectory(src/audio)
 # add_subdirectory(src/pathtracer)
 # add_subdirectory(src/physics)
@@ -62,7 +62,7 @@ add_subdirectory(src/core)
 
 # Add tests
 if(LUMA_BUILD_TESTS)
-    # add_subdirectory(tests)
+    add_subdirectory(tests)
 endif()
 
 # Print configuration summary

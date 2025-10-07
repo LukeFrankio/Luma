@@ -5,3 +5,6 @@
 
 # Ignore the build directory
 /build/
+
+# Ignore VS Code workspace settings
+/.vscode/

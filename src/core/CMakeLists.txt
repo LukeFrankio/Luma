@@ -27,9 +27,7 @@ target_link_libraries(luma_core PUBLIC
 include(CompilerWarnings)
 set_luma_warnings(luma_core)
 
-# Apply sanitizers in debug builds
-include(Sanitizers)
-enable_luma_sanitizers(luma_core)
+
 
 # Set library properties
 set_target_properties(luma_core PROPERTIES

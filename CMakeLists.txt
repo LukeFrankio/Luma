@@ -49,7 +49,7 @@ if(LUMA_BUILD_TESTS)
 endif()
 
 # Add subdirectories (will be uncommented as modules are created)
-# add_subdirectory(src/core)
+add_subdirectory(src/core)
 # add_subdirectory(src/vulkan)
 # add_subdirectory(src/scene)
 # add_subdirectory(src/asset)

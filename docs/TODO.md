@@ -3,7 +3,7 @@
 **Project**: Path-Traced Pong on AMD Vega 8  
 **Target**: 30 FPS @ 1920×1080  
 **Timeline**: ~8 weeks  
-**Status**: Not Started
+**Status**: Phase 0 - In Progress (Foundation)
 
 ---
 
@@ -27,88 +27,97 @@
 
 ### Project Structure
 
-- [ ] Create root `CMakeLists.txt`
-  - [ ] Set minimum CMake version to 3.20
-  - [ ] Set C++26 standard
-  - [ ] Define project name and version
-  - [ ] Add subdirectories for modules
-- [ ] Create folder structure:
-  - [ ] `include/luma/` (public headers)
-  - [ ] `src/` (implementation)
-  - [ ] `shaders/` (GLSL shaders)
-  - [ ] `tests/` (Google Test suites)
-  - [ ] `cmake/` (CMake modules)
-  - [ ] `assets/` (scenes, settings)
-  - [ ] `docs/` (documentation - LUMA_ARCHITECTURE.md and TODO.md already here)
-- [ ] Create `.gitignore`
-  - [ ] Ignore `build/`, `shaders_cache/`, `.vs/`, `.vscode/`
-  - [ ] Ignore OS-specific files (`.DS_Store`, `Thumbs.db`)
-- [ ] Create `README.md` (basic project overview)
-- [ ] Create `LICENSE` file (GPL)
-- [ ] Initialize git repository
-  - [ ] Initial commit with project structure
+- [x] Create root `CMakeLists.txt`
+  - [x] Set minimum CMake version to 4.1 (latest)
+  - [x] Set C++26 standard
+  - [x] Define project name and version
+  - [x] Add subdirectories for modules (commented out, ready to uncomment)
+- [x] Create folder structure:
+  - [x] `include/luma/` (public headers)
+  - [x] `src/` (implementation)
+  - [x] `shaders/` (GLSL shaders)
+  - [x] `tests/` (Google Test suites)
+  - [x] `cmake/` (CMake modules)
+  - [x] `assets/` (scenes, settings)
+  - [x] `docs/` (documentation - LUMA_ARCHITECTURE.md and TODO.md already here)
+- [x] Create `.gitignore`
+  - [x] Ignore `build/`, `shaders_cache/`, `.vs/`, `.vscode/`
+  - [x] Ignore OS-specific files (`.DS_Store`, `Thumbs.db`)
+- [x] Create `README.md` (basic project overview)
+- [x] Create `LICENSE` file (GPL)
+- [x] Initialize git repository
+  - [x] Initial commit with project structure
 
 ### CMake Configuration
 
-- [ ] Create `cmake/CompilerWarnings.cmake`
-  - [ ] Add `-Wall -Wextra -Werror -pedantic` for GCC/Clang
-  - [ ] Add `/W4 /WX` for MSVC
-  - [ ] Make warnings configurable (option to disable -Werror)
-- [ ] Create `cmake/Sanitizers.cmake`
-  - [ ] Add `-fsanitize=address,undefined` for debug builds
-  - [ ] Platform-specific handling (GCC/Clang only)
-- [ ] Create `cmake/FetchDependencies.cmake`
-  - [ ] Set up FetchContent for dependencies
-  - [ ] Configure vcpkg integration (optional)
-- [ ] Create `cmake/FindVulkan.cmake` wrapper (if needed)
+- [x] Create `cmake/CompilerWarnings.cmake`
+  - [x] Add `-Wall -Wextra -Werror -pedantic` for GCC/Clang
+  - [x] Add `/W4 /WX` for MSVC
+  - [x] Make warnings configurable (option to disable -Werror)
+- [x] Create `cmake/Sanitizers.cmake`
+  - [x] Add `-fsanitize=address,undefined` for debug builds
+  - [x] Platform-specific handling (GCC/Clang only)
+- [x] Create `cmake/FetchDependencies.cmake`
+  - [x] Set up FetchContent for dependencies
+  - [x] All dependencies configured (GLM, VMA, ImGui, GLFW, yaml-cpp, Google Test)
+  - [x] Using Vulkan SDK's shaderc (glslc) instead of building from source
+- [x] Create code quality tools
+  - [x] `.clang-format` (LLVM style with C++26 settings)
+  - [x] `.clang-tidy` (comprehensive static analysis)
 
 ### Core Module (`luma_core`)
 
-- [ ] Create `include/luma/core/types.h`
-  - [ ] Define basic types: `uint8_t`, `uint16_t`, `uint32_t`, `uint64_t`
-  - [ ] Define `Result<T, Error>` as alias for `std::expected<T, Error>`
-  - [ ] Define `Error` enum class with error codes
-- [ ] Create `include/luma/core/math.h`
-  - [ ] Include GLM headers
-  - [ ] Define common types: `vec2`, `vec3`, `vec4`, `mat4`, `quat`
-  - [ ] Add constexpr math helpers (clamp, lerp, smoothstep)
-- [ ] Create `include/luma/core/logging.h`
-  - [ ] Define log levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL
-  - [ ] Define log macros: `LOG_INFO()`, `LOG_ERROR()`, etc.
-  - [ ] Add format string support (std::format or fmt library)
-- [ ] Create `src/core/logging.cpp`
-  - [ ] Implement console output (colored terminal output)
-  - [ ] Implement file output (`logs/luma.log`)
-  - [ ] Thread-safe logging with mutex
-  - [ ] Include timestamp, thread ID, severity level
-- [ ] Create `include/luma/core/time.h`
-  - [ ] Define `Timer` class using `std::chrono`
-  - [ ] Add `delta_time()`, `elapsed()` functions
-  - [ ] Add FPS counter helper
-- [ ] Create `src/core/time.cpp`
-  - [ ] Implement timer functionality
-- [ ] Create `include/luma/core/jobs.h`
+- [x] Create `include/luma/core/types.hpp`
+  - [x] Define basic types: `u8`, `u16`, `u32`, `u64`, `i8`, `i16`, `i32`, `i64`, `f32`, `f64`
+  - [x] Define `Result<T>` as alias for `std::expected<T, Error>`
+  - [x] Define `Error` struct with error codes and messages
+  - [x] Define `ErrorCode` enum class with comprehensive error codes
+  - [x] Define `NonCopyable` and `NonMovable` utility types
+- [x] Create `include/luma/core/math.hpp`
+  - [x] Include GLM headers
+  - [x] Define common types: `vec2`, `vec3`, `vec4`, `mat4`, `quat`
+  - [x] Add constexpr math helpers (clamp, lerp, smoothstep, smootherstep)
+  - [x] Add mathematical constants (pi, e, sqrt2, deg_to_rad, etc.)
+  - [x] Add utility functions (min, max, sign, approx_equal, approx_zero)
+- [x] Create `include/luma/core/logging.hpp`
+  - [x] Define log levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL
+  - [x] Define log macros: `LOG_INFO()`, `LOG_ERROR()`, etc.
+  - [x] Add format string support (std::format)
+  - [x] Define Logger class with thread-safe singleton pattern
+- [x] Create `src/core/logging.cpp`
+  - [x] Implement console output (colored ANSI terminal output)
+  - [x] Implement file output (`logs/luma.log`)
+  - [x] Thread-safe logging with mutex
+  - [x] Include timestamp, thread ID, severity level, source location
+- [x] Create `include/luma/core/time.hpp`
+  - [x] Define `Timer` class using `std::chrono::steady_clock`
+  - [x] Add `delta_time()`, `elapsed()`, `tick()` functions
+  - [x] Add `FPSCounter` class for FPS tracking
+- [x] Create `src/core/time.cpp`
+  - [x] Implement timer functionality with high-resolution clock
+  - [x] Implement FPS counter with moving average
+- [ ] Create `include/luma/core/jobs.hpp` (DEFERRED - not needed for Phase 0)
   - [ ] Define `Job` struct (function, dependencies, ref_count)
   - [ ] Define `JobHandle` struct (ID, generation)
   - [ ] Define `JobSystem` class interface
-- [ ] Create `src/core/jobs.cpp`
+- [ ] Create `src/core/jobs.cpp` (DEFERRED - not needed for Phase 0)
   - [ ] Implement work-stealing job system (stub for now)
   - [ ] Create thread pool based on `hardware_concurrency()`
   - [ ] Implement job scheduling queue
   - [ ] Implement dependency tracking
-- [ ] Create `include/luma/core/memory.h`
+- [ ] Create `include/luma/core/memory.hpp` (DEFERRED - not needed for Phase 0)
   - [ ] Define `LinearAllocator` class
   - [ ] Define `PoolAllocator` class
   - [ ] Define allocation tracking helpers
-- [ ] Create `src/core/memory.cpp`
+- [ ] Create `src/core/memory.cpp` (DEFERRED - not needed for Phase 0)
   - [ ] Implement linear allocator (bump pointer)
   - [ ] Implement pool allocator (free-list)
   - [ ] Add debug tracking (allocation count, size)
-- [ ] Create `CMakeLists.txt` for core module
-  - [ ] Define `luma_core` target (static lib or DLL)
-  - [ ] Link GLM
-  - [ ] Set C++26 standard
-  - [ ] Apply compiler warnings
+- [x] Create `CMakeLists.txt` for core module
+  - [x] Define `luma_core` target (static library)
+  - [x] Link GLM
+  - [x] Set C++26 standard
+  - [x] Apply compiler warnings and sanitizers
 
 ### Vulkan Backend Module (`luma_vulkan`)
 

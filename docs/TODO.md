@@ -96,23 +96,40 @@
 - [x] Create `src/core/time.cpp`
   - [x] Implement timer functionality with high-resolution clock
   - [x] Implement FPS counter with moving average
-- [ ] Create `include/luma/core/jobs.hpp` (DEFERRED - not needed for Phase 0)
-  - [ ] Define `Job` struct (function, dependencies, ref_count)
-  - [ ] Define `JobHandle` struct (ID, generation)
-  - [ ] Define `JobSystem` class interface
-- [ ] Create `src/core/jobs.cpp` (DEFERRED - not needed for Phase 0)
-  - [ ] Implement work-stealing job system (stub for now)
-  - [ ] Create thread pool based on `hardware_concurrency()`
-  - [ ] Implement job scheduling queue
-  - [ ] Implement dependency tracking
-- [ ] Create `include/luma/core/memory.hpp` (DEFERRED - not needed for Phase 0)
-  - [ ] Define `LinearAllocator` class
-  - [ ] Define `PoolAllocator` class
-  - [ ] Define allocation tracking helpers
-- [ ] Create `src/core/memory.cpp` (DEFERRED - not needed for Phase 0)
-  - [ ] Implement linear allocator (bump pointer)
-  - [ ] Implement pool allocator (free-list)
-  - [ ] Add debug tracking (allocation count, size)
+- [x] Create `include/luma/core/jobs.hpp`
+  - [x] Define `Job` struct (function, data, atomic ref count, parent pointer, generation)
+  - [x] Define `JobHandle` struct (ID, generation for stale handle detection)
+  - [x] Define `JobSystem` class interface (work-stealing thread pool)
+  - [x] Comprehensive Doxygen documentation with examples
+- [x] Create `src/core/jobs.cpp`
+  - [x] Implement work-stealing job system with std::deque-based queues
+  - [x] Create thread pool based on `hardware_concurrency()`
+  - [x] Implement job scheduling queue (LIFO for owner, FIFO for thieves)
+  - [x] Implement dependency tracking via atomic reference counting
+  - [x] Implement parallel_for helper for data-parallel tasks
+  - [x] Fixed Job struct storage (using std::unique_ptr to handle std::atomic members)
+- [x] Create `include/luma/core/memory.hpp`
+  - [x] Define `LinearAllocator` class (bump pointer allocator)
+  - [x] Define `PoolAllocator` class (fixed-size free-list allocator)
+  - [x] Define allocation tracking helpers (AllocationTracker)
+  - [x] Template helpers for type-safe allocation
+  - [x] Comprehensive Doxygen documentation
+- [x] Create `src/core/memory.cpp`
+  - [x] Implement linear allocator (bump pointer, O(1) alloc, reset all at once)
+  - [x] Implement pool allocator (free-list, O(1) alloc/dealloc)
+  - [x] Add debug tracking (allocation count, size via std::atomic)
+  - [x] Fixed Windows compatibility (std::malloc instead of std::aligned_alloc)
+  - [x] Fixed error codes and return types (CORE_OUT_OF_MEMORY, std::unexpected wrappers)
+- [x] Create `CMakeLists.txt` for core module
+  - [x] Define `luma_core` target (static library)
+  - [x] Added jobs.cpp and memory.cpp to source files
+  - [x] Link GLM
+  - [x] Set C++26 standard
+  - [x] Apply compiler warnings and sanitizers
+- [x] Build verification
+  - [x] Zero compilation warnings (fixed GLM warnings with pragma directives)
+  - [x] Zero compilation errors
+  - [x] Library created: `libluma_core.a` (grown from 3.8 MB to 6.05 MB)
 - [x] Create `CMakeLists.txt` for core module
   - [x] Define `luma_core` target (static library)
   - [x] Link GLM

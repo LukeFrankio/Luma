@@ -27,12 +27,19 @@
 // enable GLM experimental extensions (quaternion, norm, etc.)
 #define GLM_ENABLE_EXPERIMENTAL
 
+// disable warnings from external GLM library (we can't fix their code)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wduplicated-branches"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/norm.hpp>
+
+#pragma GCC diagnostic pop
 
 #include <algorithm>
 #include <cmath>

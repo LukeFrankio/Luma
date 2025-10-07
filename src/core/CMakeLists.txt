@@ -1,5 +1,5 @@
 # luma_core library
-# Core functionality: types, math, logging, time, jobs (stub), memory (stub)
+# Core functionality: types, math, logging, time, jobs, memory
 
 cmake_minimum_required(VERSION 4.1 FATAL_ERROR)
 
@@ -8,6 +8,8 @@ add_library(luma_core STATIC
     # Source files
     ${CMAKE_CURRENT_SOURCE_DIR}/logging.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/time.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/jobs.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory.cpp
 )
 
 # Set C++26 standard

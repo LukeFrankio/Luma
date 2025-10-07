@@ -35,21 +35,44 @@ endif()
 message(STATUS "test_input executable configured (interactive window + input test)")
 
 # ==============================================================================
-# Google Test suites (TODO: add unit tests)
+# Google Test suites
 # ==============================================================================
 
-# TODO: add unit tests for core module
-# add_executable(luma_tests
-#     core/test_logging.cpp
-#     core/test_math.cpp
-# )
-# 
-# target_link_libraries(luma_tests
-#     PRIVATE
-#         luma_core
-#         GTest::gtest
-#         GTest::gtest_main
-# )
-# 
-# include(GoogleTest)
-# gtest_discover_tests(luma_tests)
+# Test sources
+set(TEST_SOURCES
+    core/test_logging.cpp
+    core/test_math.cpp
+)
+
+# Create test executable
+add_executable(luma_tests ${TEST_SOURCES})
+
+target_include_directories(luma_tests
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(luma_tests
+    PRIVATE
+        GTest::gtest
+        GTest::gtest_main
+        luma_core
+        luma_vulkan
+        luma_input
+)
+
+# Apply compiler warnings
+if(COMMAND apply_compiler_warnings)
+    apply_compiler_warnings(luma_tests)
+endif()
+
+# Register tests with CTest
+include(GoogleTest)
+gtest_discover_tests(luma_tests
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+)
+
+message(STATUS "luma_tests configured with Google Test")
+message(STATUS "Test sources: ${TEST_SOURCES}")
+

@@ -79,3 +79,9 @@ gtest_discover_tests(luma_tests
 message(STATUS "luma_tests configured with Google Test")
 message(STATUS "Test sources: ${TEST_SOURCES}")
 
+# ==============================================================================
+# Scene module tests
+# ==============================================================================
+
+add_subdirectory(scene)
+

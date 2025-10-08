@@ -1,0 +1,90 @@
+/**
+ * @file gradient.comp
+ * @brief Simple gradient compute shader for testing pipeline system
+ * 
+ * Generates a horizontal gradient from red (left) to green (right).
+ * Each pixel's color is based on its X coordinate normalized to [0, 1].
+ * 
+ * This shader tests:
+ * - Compute pipeline creation and dispatch
+ * - Storage image binding and writes
+ * - Workgroup size configuration (8x8)
+ * - Global invocation ID usage
+ * 
+ * Expected output: 1920x1080 image with smooth red-to-green gradient
+ * 
+ * @author LukeFrankio
+ * @date 2025-10-08
+ */
+
+#version 450
+
+/**
+ * Workgroup size: 8x8 (64 threads per workgroup)
+ * 
+ * For 1920x1080 image:
+ * - X workgroups: ceil(1920 / 8) = 240
+ * - Y workgroups: ceil(1080 / 8) = 135
+ * - Total workgroups: 240 * 135 = 32,400
+ * - Total threads: 32,400 * 64 = 2,073,600 (one per pixel)
+ */
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+/**
+ * Output storage image (R8G8B8A8_UNORM format)
+ * 
+ * Binding 0, Set 0
+ * Write-only access (no reading from image)
+ * Format must match VkImageCreateInfo in CPU code
+ */
+layout(binding = 0, rgba8) uniform writeonly image2D output_image;
+
+/**
+ * @brief Main compute shader entry point
+ * 
+ * ✨ PURE SHADER FUNCTION ✨ (no side effects except image write)
+ * 
+ * Algorithm:
+ * 1. Get global thread ID (gl_GlobalInvocationID.xy)
+ * 2. Normalize X coordinate to [0, 1] range
+ * 3. Compute color: red = (1 - t), green = t, blue = 0, alpha = 1
+ * 4. Write color to output image at thread's pixel location
+ * 
+ * Color formula:
+ * - Left edge (x=0): RGB(1, 0, 0) = pure red
+ * - Right edge (x=1919): RGB(0, 1, 0) = pure green
+ * - Middle: smooth interpolation
+ * 
+ * @note Thread-safe: Each thread writes to unique pixel
+ * @note Bounds checking: Only write if within image dimensions
+ */
+void main() {
+    // Get pixel coordinates from global invocation ID
+    ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+    
+    // Get image dimensions
+    ivec2 image_size = imageSize(output_image);
+    
+    // Bounds check: Don't write outside image (handles non-multiple-of-8 dimensions)
+    if (pixel_coords.x >= image_size.x || pixel_coords.y >= image_size.y) {
+        return;
+    }
+    
+    // Normalize X coordinate to [0, 1] range
+    float t = float(pixel_coords.x) / float(image_size.x - 1);
+    
+    // Compute gradient color: red to green
+    // Red channel: 1.0 at left, 0.0 at right
+    // Green channel: 0.0 at left, 1.0 at right
+    // Blue channel: 0.0 (no blue component)
+    // Alpha channel: 1.0 (fully opaque)
+    vec4 color = vec4(
+        1.0 - t,  // Red: decreases left-to-right
+        t,        // Green: increases left-to-right
+        0.0,      // Blue: always zero
+        1.0       // Alpha: fully opaque
+    );
+    
+    // Write color to output image
+    imageStore(output_image, pixel_coords, color);
+}

@@ -43,6 +43,7 @@ set(TEST_SOURCES
     core/test_logging.cpp
     core/test_math.cpp
     asset/test_shader_compiler.cpp
+    vulkan/test_gradient_compute.cpp
 )
 
 # Create test executable

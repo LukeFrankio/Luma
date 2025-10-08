@@ -65,6 +65,9 @@ if(LUMA_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
+# Add examples
+add_subdirectory(examples)
+
 # Print configuration summary
 message(STATUS "")
 message(STATUS "=== LUMA Engine Configuration ===")

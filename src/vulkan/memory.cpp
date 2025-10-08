@@ -6,7 +6,24 @@
  * @date 2025-10-07
  */
 
+// Disable warnings for VMA (third-party library)
+// VMA uses patterns that don't match our strict warning policy
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#pragma GCC diagnostic ignored "-Wduplicated-branches"
+
+#define VMA_IMPLEMENTATION
 #include <luma/vulkan/memory.hpp>
+
+#pragma GCC diagnostic pop
+
 #include <luma/core/logging.hpp>
 
 #include <cstring>

@@ -312,20 +312,26 @@
   - [x] Quiet execution: only test failures or explicit output shown
 
 ### Code Quality Tools
-
-- [ ] Create `.clang-format` file
-  - [ ] Set style: `BasedOnStyle: Google` or custom
-  - [ ] Configure indent: 2 spaces
-  - [ ] Configure line length: 100 chars
-  - [ ] Configure brace style: K&R for functions
-- [ ] Create `.clang-tidy` file
-  - [ ] Enable modernize checks
-  - [ ] Enable performance checks
-  - [ ] Enable readability checks
-  - [ ] Disable overly strict checks
-- [ ] Test formatting
-  - [ ] Run `clang-format` on all source files
-  - [ ] Verify output matches style guide
+ 
+- [x] Create `.clang-format` file
+  - [x] Set style: `BasedOnStyle: LLVM` (customized for LUMA Engine)
+  - [x] Configure indent: 4 spaces (IndentWidth: 4, TabWidth: 4, UseTab: Never)
+  - [x] Configure line length: 100 chars (ColumnLimit: 100)
+  - [x] Configure brace style: K&R for functions (BreakBeforeBraces: Attach)
+  - [x] Additional: AlwaysBreakTemplateDeclarations: Yes, PointerAlignment: Left, SortIncludes: CaseSensitive, FixNamespaceComments: true
+  - [x] See .clang-format in project root for full configuration (LLVM base, functional/modern C++ tweaks)
+- [x] Create `.clang-tidy` file
+  - [x] Enable modernize checks (modernize-*)
+  - [x] Enable performance checks (performance-*)
+  - [x] Enable readability checks (readability-*)
+  - [x] Disable overly strict checks (see exclusions in .clang-tidy)
+  - [x] Additional: bugprone-*, cert-*, clang-analyzer-*, concurrency-*, hicpp-*, misc-*, portability-*, WarningsAsErrors: '*', custom naming conventions
+  - [x] See .clang-tidy in project root for full configuration (functional/modern C++ focus, strict but practical)
+- [x] Test formatting
+  - [x] Ran `clang-format` on all source files (recursive, .cpp/.hpp)
+  - [x] Output matches style guide (LLVM base, 4-space indent, 100-char lines, K&R braces)
+  - [x] All files formatted consistently, no manual edits required
+  - [x] Formatting check can be automated in CI (future)
 
 ### Build and Test
 

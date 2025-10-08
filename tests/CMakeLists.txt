@@ -42,6 +42,7 @@ message(STATUS "test_input executable configured (interactive window + input tes
 set(TEST_SOURCES
     core/test_logging.cpp
     core/test_math.cpp
+    asset/test_shader_compiler.cpp
 )
 
 # Create test executable
@@ -59,6 +60,7 @@ target_link_libraries(luma_tests
         luma_core
         luma_vulkan
         luma_input
+        luma_asset
 )
 
 # Apply compiler warnings

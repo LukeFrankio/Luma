@@ -312,7 +312,7 @@
   - [x] Quiet execution: only test failures or explicit output shown
 
 ### Code Quality Tools
- 
+
 - [x] Create `.clang-format` file
   - [x] Set style: `BasedOnStyle: LLVM` (customized for LUMA Engine)
   - [x] Configure indent: 4 spaces (IndentWidth: 4, TabWidth: 4, UseTab: Never)
@@ -363,24 +363,42 @@
 
 ### Shader Compilation System
 
-- [ ] Fetch shaderc
-  - [ ] Use `find_package(shaderc)` (from Vulkan SDK) or FetchContent
-- [ ] Create `include/luma/asset/shader_compiler.h`
-  - [ ] Define `ShaderCompiler` class
-  - [ ] Add methods: `compile_glsl()`, `load_spirv()`, `get_cache_path()`
-- [ ] Create `src/asset/shader_compiler.cpp`
-  - [ ] Initialize shaderc compiler
-  - [ ] Implement GLSL → SPIR-V compilation
-  - [ ] Compute hash of GLSL source
-  - [ ] Check cache directory for existing SPIR-V
-  - [ ] Save compiled SPIR-V to cache
-  - [ ] Load SPIR-V from cache on subsequent runs
-- [ ] Create cache directory structure
-  - [ ] `shaders_cache/` folder (add to .gitignore)
-- [ ] Test shader compilation
-  - [ ] Write simple test shader (compute shader that returns value)
-  - [ ] Compile to SPIR-V
-  - [ ] Verify cache works
+- [x] Fetch shaderc
+  - [x] Built from source using FetchContent (MinGW compatible)
+  - [x] Fetched spirv-headers, spirv-tools, and glslang as dependencies
+  - [x] Applied patch to glslang for missing `#include <cstdint>`
+  - [x] Configured with SHADERC_SKIP_TESTS, SHADERC_SKIP_EXAMPLES
+- [x] Create `include/luma/asset/shader_compiler.hpp`
+  - [x] Define `ShaderCompiler` class with RAII semantics
+  - [x] Add methods: `compile()`, `get_cache_path()`
+  - [x] Define `ShaderModule` struct with spirv, stage, hash
+  - [x] Define `ShaderError` enum for error handling
+  - [x] Comprehensive Doxygen documentation
+- [x] Create `src/asset/shader_compiler.cpp`
+  - [x] Initialize shaderc compiler (shaderc_compiler_t)
+  - [x] Implement GLSL → SPIR-V compilation with error handling
+  - [x] Compute SHA-256 hash of GLSL source for cache validation
+  - [x] Check cache directory for existing SPIR-V by hash
+  - [x] Save compiled SPIR-V to cache with .spv extension
+  - [x] Load SPIR-V from cache on subsequent runs (cache hit)
+  - [x] Automatic shader stage deduction from file extension
+  - [x] Force recompile option for development workflow
+- [x] Create cache directory structure
+  - [x] `shaders_cache/` folder (added to .gitignore)
+  - [x] Automatic directory creation if not exists
+- [x] Create `tests/asset/test_shader_compiler.cpp`
+  - [x] Test: CompileSimpleShader - basic GLSL compilation
+  - [x] Test: CacheWorks - verify cache hit/miss behavior
+  - [x] Test: InvalidShaderFails - error handling for bad GLSL
+  - [x] Test: MissingShaderFails - error handling for missing files
+  - [x] Test: ForceRecompileWorks - verify force recompile flag
+  - [x] Test: StageDeductionWorks - test all shader stage extensions
+  - [x] All 6 tests pass (100% success rate)
+- [x] Build verification
+  - [x] Zero compilation warnings
+  - [x] Zero compilation errors
+  - [x] libluma_asset.a: built successfully with shaderc integration
+  - [x] All 40 tests pass (including 6 shader compiler tests)
 
 ### Compute Pipeline Abstraction
 

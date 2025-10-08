@@ -1,0 +1,26 @@
+#version 460
+
+// Simple gradient compute shader for testing shader compilation
+// Writes a procedural gradient to a storage image
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(binding = 0, rgba8) uniform writeonly image2D output_image;
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(output_image);
+    
+    // Bounds check
+    if (pixel.x >= size.x || pixel.y >= size.y) {
+        return;
+    }
+    
+    // Compute normalized coordinates [0, 1]
+    vec2 uv = vec2(pixel) / vec2(size);
+    
+    // Generate gradient: red-to-green left-to-right, blue top-to-bottom
+    vec4 color = vec4(uv.x, uv.y, 1.0 - uv.y, 1.0);
+    
+    imageStore(output_image, pixel, color);
+}

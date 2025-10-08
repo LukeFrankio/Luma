@@ -8,10 +8,10 @@ set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/_deps)
 
 # Disable in-source builds
 set(FETCHCONTENT_FULLY_DISCONNECTED OFF)
-set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
+set(FETCHCONTENT_UPDATES_DISCONNECTED OFF)
 
 # Quiet fetch content by default
-set(FETCHCONTENT_QUIET ON)
+set(FETCHCONTENT_QUIET OFF)
 
 function(fetch_dependencies)
     message(STATUS "Fetching external dependencies...")
@@ -77,15 +77,81 @@ function(fetch_dependencies)
         GIT_SHALLOW TRUE
     )
     
+    # SPIRV-Headers (required by SPIRV-Tools)
+    FetchContent_Declare(
+        spirv-headers
+        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Headers.git
+        GIT_TAG vulkan-sdk-1.3.290.0
+    )
+    
+    # SPIRV-Tools (required by shaderc)
+    set(SPIRV_HEADERS_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
+    set(SPIRV_HEADERS_SKIP_INSTALL ON CACHE BOOL "" FORCE)
+    
+    FetchContent_Declare(
+        spirv-tools
+        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Tools.git
+        GIT_TAG vulkan-sdk-1.3.290.0
+    )
+    
+    # glslang (required by shaderc)
+    FetchContent_Declare(
+        glslang
+        GIT_REPOSITORY https://github.com/KhronosGroup/glslang.git
+        GIT_TAG vulkan-sdk-1.3.290.0
+    )
+    
+    # shaderc - GLSL/HLSL to SPIR-V compiler (built from source for MinGW compatibility)
+    # Note: We build from source because Vulkan SDK's prebuilt libs are MSVC-only
+    set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
+    set(SHADERC_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
+    set(SHADERC_SKIP_INSTALL ON CACHE BOOL "" FORCE)
+    set(SHADERC_ENABLE_SHARED_CRT OFF CACHE BOOL "" FORCE)
+    
+    # Disable spirv-tools tests and install
+    set(SPIRV_SKIP_TESTS ON CACHE BOOL "" FORCE)
+    set(SPIRV_SKIP_EXECUTABLES ON CACHE BOOL "" FORCE)
+    set(SKIP_SPIRV_TOOLS_INSTALL ON CACHE BOOL "" FORCE)
+    
+    # Disable glslang tests and install
+    set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)
+    set(ENABLE_SPVREMAPPER OFF CACHE BOOL "" FORCE)
+    set(SKIP_GLSLANG_INSTALL ON CACHE BOOL "" FORCE)
+    set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+    
+    # Fetch shaderc (dependencies will be provided by the above FetchContent declarations)
+    FetchContent_Declare(
+        shaderc
+        GIT_REPOSITORY https://github.com/google/shaderc.git
+        GIT_TAG v2024.3
+    )
+    
     # Make all dependencies available
     message(STATUS "Making dependencies available (this may take a while on first run)...")
     
+    # Fetch dependencies in order (shaderc dependencies first)
     FetchContent_MakeAvailable(
         glm
         vma
         glfw
         yaml-cpp
+        spirv-headers
+        spirv-tools
+        glslang
+        shaderc
     )
+    
+    # Patch glslang SpvBuilder.h to add missing #include <cstdint>
+    set(SPV_BUILDER_H "${glslang_SOURCE_DIR}/SPIRV/SpvBuilder.h")
+    if(EXISTS "${SPV_BUILDER_H}")
+        file(READ "${SPV_BUILDER_H}" FILE_CONTENTS)
+        string(FIND "${FILE_CONTENTS}" "#include <cstdint>" ALREADY_PATCHED)
+        if(ALREADY_PATCHED EQUAL -1)
+            string(REPLACE "#include <stack>" "#include <stack>\n#include <cstdint>" FILE_CONTENTS "${FILE_CONTENTS}")
+            file(WRITE "${SPV_BUILDER_H}" "${FILE_CONTENTS}")
+            message(STATUS "Patched glslang SpvBuilder.h to add #include <cstdint>")
+        endif()
+    endif()
     
     if(LUMA_BUILD_TESTS)
         FetchContent_MakeAvailable(googletest)
@@ -139,7 +205,7 @@ function(fetch_dependencies)
     if(LUMA_BUILD_TESTS)
         message(STATUS "Google Test: ${googletest_SOURCE_DIR}")
     endif()
-    message(STATUS "shaderc: Using Vulkan SDK (glslc compiler)")
+    message(STATUS "shaderc: ${shaderc_SOURCE_DIR} (built from source for MinGW)")
     message(STATUS "==========================")
     message(STATUS "")
 endfunction()

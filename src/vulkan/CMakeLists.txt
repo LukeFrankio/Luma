@@ -17,6 +17,10 @@ add_library(luma_vulkan STATIC
     
     # Memory management (VMA)
     memory.cpp
+    
+    # Compute pipelines and descriptors
+    pipeline.cpp
+    descriptor.cpp
 )
 
 target_include_directories(luma_vulkan PUBLIC

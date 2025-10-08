@@ -402,22 +402,39 @@
 
 ### Compute Pipeline Abstraction
 
-- [ ] Create `include/luma/vulkan/pipeline.h`
-  - [ ] Define `ComputePipeline` class
-  - [ ] Add methods: `create()`, `destroy()`, `bind()`, `dispatch()`
-- [ ] Create `src/vulkan/pipeline.cpp`
-  - [ ] Create compute pipeline from SPIR-V
-  - [ ] Create pipeline layout (descriptor sets, push constants)
-  - [ ] Create descriptor set layout
-  - [ ] Create descriptor pool
-  - [ ] Allocate descriptor sets
-- [ ] Create `include/luma/vulkan/descriptor.h`
-  - [ ] Define `DescriptorSet` class
-  - [ ] Add methods: `bind_buffer()`, `bind_image()`, `update()`
-- [ ] Create `src/vulkan/descriptor.cpp`
-  - [ ] Implement descriptor set updates
-  - [ ] Bind buffers to descriptor sets
-  - [ ] Bind images to descriptor sets
+- [x] Create `include/luma/vulkan/pipeline.hpp`
+  - [x] Define `ComputePipeline` class with RAII semantics
+  - [x] Add methods: `bind()`, `dispatch()`, `push_constants()`
+  - [x] Define `ComputePipelineBuilder` for fluent configuration
+  - [x] Define `PipelineCache` for disk-based caching
+  - [x] Support for specialization constants
+  - [x] Comprehensive Doxygen documentation
+- [x] Create `src/vulkan/pipeline.cpp`
+  - [x] Create compute pipeline from SPIR-V
+  - [x] Create pipeline layout (descriptor sets, push constants)
+  - [x] Implement builder pattern for configuration
+  - [x] Implement pipeline caching (load/save to disk)
+  - [x] Full RAII with move semantics
+  - [x] Extensive logging for debugging
+- [x] Create `include/luma/vulkan/descriptor.hpp`
+  - [x] Define `DescriptorSetLayout` class
+  - [x] Define `DescriptorSetLayoutBuilder` for configuration
+  - [x] Define `DescriptorPool` for allocation
+  - [x] Define `DescriptorSet` with type-safe binding methods
+  - [x] Add methods: `bind_uniform_buffer()`, `bind_storage_buffer()`, `bind_storage_image()`, `bind_sampled_image()`
+  - [x] Support method chaining for fluent API
+- [x] Create `src/vulkan/descriptor.cpp`
+  - [x] Implement descriptor set layout creation
+  - [x] Implement descriptor pool with auto-sizing
+  - [x] Allocate descriptor sets from pool
+  - [x] Bind buffers to descriptor sets (uniform, storage)
+  - [x] Bind images to descriptor sets (storage, sampled)
+  - [x] Update descriptor sets atomically
+  - [x] Bind descriptor sets to command buffer
+- [x] Build verification
+  - [x] Zero compilation warnings
+  - [x] Zero compilation errors
+  - [x] All 40 existing tests pass (100% success rate)
 
 ### Simple Gradient Compute Shader
 

@@ -363,11 +363,11 @@
 
 ### Shader Compilation System
 
-- [x] Fetch shaderc
-  - [x] Built from source using FetchContent (MinGW compatible)
-  - [x] Fetched spirv-headers, spirv-tools, and glslang as dependencies
-  - [x] Applied patch to glslang for missing `#include <cstdint>`
-  - [x] Configured with SHADERC_SKIP_TESTS, SHADERC_SKIP_EXAMPLES
+- [x] Fetch Slang
+  - [x] Prebuilt binaries (v2024.14.4) from GitHub releases
+  - [x] Windows x64 ZIP archive (no source build due to dependency conflicts)
+  - [x] Configured with FetchContent_Declare + URL download
+  - [x] Invoked via CLI tool (slangc.exe), NOT C API (stability issues)
 - [x] Create `include/luma/asset/shader_compiler.hpp`
   - [x] Define `ShaderCompiler` class with RAII semantics
   - [x] Add methods: `compile()`, `get_cache_path()`
@@ -375,30 +375,30 @@
   - [x] Define `ShaderError` enum for error handling
   - [x] Comprehensive Doxygen documentation
 - [x] Create `src/asset/shader_compiler.cpp`
-  - [x] Initialize shaderc compiler (shaderc_compiler_t)
-  - [x] Implement GLSL → SPIR-V compilation with error handling
-  - [x] Compute SHA-256 hash of GLSL source for cache validation
+  - [x] Invoke slangc CLI tool via system() command (subprocess approach)
+  - [x] Implement Slang → SPIR-V compilation with `-target spirv -profile glsl_460`
+  - [x] Compute SHA-256 hash of Slang source for cache validation
   - [x] Check cache directory for existing SPIR-V by hash
   - [x] Save compiled SPIR-V to cache with .spv extension
   - [x] Load SPIR-V from cache on subsequent runs (cache hit)
-  - [x] Automatic shader stage deduction from file extension
+  - [x] Automatic shader stage deduction from file extension (.slang)
   - [x] Force recompile option for development workflow
 - [x] Create cache directory structure
   - [x] `shaders_cache/` folder (added to .gitignore)
   - [x] Automatic directory creation if not exists
 - [x] Create `tests/asset/test_shader_compiler.cpp`
-  - [x] Test: CompileSimpleShader - basic GLSL compilation
+  - [x] Test: CompileSimpleShader - basic Slang compilation
   - [x] Test: CacheWorks - verify cache hit/miss behavior
-  - [x] Test: InvalidShaderFails - error handling for bad GLSL
+  - [x] Test: InvalidShaderFails - error handling for bad Slang
   - [x] Test: MissingShaderFails - error handling for missing files
   - [x] Test: ForceRecompileWorks - verify force recompile flag
-  - [x] Test: StageDeductionWorks - test all shader stage extensions
+  - [x] Test: StageDeductionWorks - test shader stage extensions
   - [x] All 6 tests pass (100% success rate)
 - [x] Build verification
   - [x] Zero compilation warnings
   - [x] Zero compilation errors
-  - [x] libluma_asset.a: built successfully with shaderc integration
-  - [x] All 40 tests pass (including 6 shader compiler tests)
+  - [x] libluma_asset.a: built successfully with Slang integration
+  - [x] All 44 tests pass (including 6 shader compiler tests)
 
 ### Compute Pipeline Abstraction
 
@@ -438,14 +438,14 @@
 
 ### Simple Gradient Compute Shader
 
-- [x] Create `shaders/gradient.comp`
-  - [x] Write GLSL compute shader (95 lines, red-to-green horizontal gradient)
-  - [x] Use `layout(local_size_x = 8, local_size_y = 8) in;`
-  - [x] Write gradient to storage image (R8G8B8A8_UNORM)
-  - [x] Compute color based on `gl_GlobalInvocationID` (normalized X coordinate)
+- [x] Create `shaders/gradient.slang`
+  - [x] Write Slang compute shader (123 lines, red-to-green horizontal gradient)
+  - [x] Use `[numthreads(8, 8, 1)]` attribute (Slang syntax)
+  - [x] Write gradient to RWTexture2D (R8G8B8A8_UNORM)
+  - [x] Compute color based on SV_DispatchThreadID (normalized X coordinate)
   - [x] Bounds checking for non-multiple-of-8 dimensions
 - [x] Compile gradient shader
-  - [x] Use shader compiler to generate SPIR-V (270 words)
+  - [x] Use shader compiler to generate SPIR-V (399 words)
   - [x] Shader compilation cache working
 - [x] Create storage image
   - [x] Create VkImage (1920×1080, R8G8B8A8_UNORM)
@@ -463,7 +463,7 @@
   - [x] Output: `gradient_output.png` (1920×1080, red-to-green gradient)
 - [x] Comprehensive testing
   - [x] Created `tests/vulkan/test_gradient_compute.cpp` (456 lines, 5 tests)
-  - [x] Test: CompileShader (shader compilation works)
+  - [x] Test: CompileShader (Slang → SPIR-V compilation works)
   - [x] Test: CreateStorageImage (1920×1080 image creation)
   - [x] Test: CreatePipelineAndDescriptors (pipeline + descriptor setup)
   - [x] Test: DispatchGradientShader (full GPU dispatch + synchronization)
@@ -476,7 +476,7 @@
   - [x] Zero compilation errors
   - [x] gradient_visualizer executable runs successfully
   - [x] GPU dispatch verified: 2,073,600 threads executed in parallel
-  - [x] PNG output generated successfully
+  - [x] PNG output generated successfully (82,472 bytes)
 
 ### Scene Module - ECS Foundation
 
@@ -571,9 +571,9 @@
   - [ ] Implement `sdf_sphere()` (distance from point to sphere)
   - [ ] Implement `sdf_box()` (distance from point to box with rounding)
   - [ ] Implement `sdf_plane()` (distance from point to plane)
-- [ ] Create GLSL SDF library
-  - [ ] Create `shaders/common/sdf.glsl`
-  - [ ] Port C++ SDF functions to GLSL
+- [ ] Create Slang SDF library
+  - [ ] Create `shaders/common/sdf.slang`
+  - [ ] Port C++ SDF functions to Slang (float3, not vec3)
   - [ ] Add SDF operations (union, intersection, subtraction)
 - [ ] Test SDF evaluation
   - [ ] Create test entities with SDF geometry
@@ -664,7 +664,7 @@
 
 ### Path Tracer Compute Shader (Megakernel)
 
-- [ ] Create `shaders/path_tracer.comp`
+- [ ] Create `shaders/path_tracer.slang`
   - [ ] Set local_size to 8×16 (128 threads, 2 wavefronts)
   - [ ] Define uniform buffer for camera data
   - [ ] Define storage buffer for BVH
@@ -676,12 +676,12 @@
   - [ ] Handle orthographic vs perspective projection
   - [ ] Generate primary ray per pixel
 - [ ] Implement BVH traversal (stackless)
-  - [ ] Include `shaders/common/bvh.glsl` helper
+  - [ ] Include `shaders/common/bvh.slang` helper
   - [ ] Traverse BVH using parent pointers
   - [ ] Test AABB intersection
   - [ ] Find closest hit
 - [ ] Implement SDF intersection
-  - [ ] Include `shaders/common/sdf.glsl`
+  - [ ] Include `shaders/common/sdf.slang`
   - [ ] Evaluate SDF at ray position
   - [ ] Use sphere tracing (march along ray until hit)
   - [ ] Return hit point, normal, material ID
@@ -727,7 +727,7 @@
 
 ### Tonemapping + Gamma Correction
 
-- [ ] Create `shaders/tonemap.comp`
+- [ ] Create `shaders/tonemap.slang`
   - [ ] Read HDR image (RGBA32F)
   - [ ] Apply ACES filmic tonemapping
   - [ ] Apply gamma correction (sRGB, 2.2 gamma)
@@ -767,7 +767,7 @@
 - [ ] Update material buffer on GPU
   - [ ] Add material type field
   - [ ] Add IOR field
-- [ ] Create `shaders/common/pbr.glsl`
+- [ ] Create `shaders/common/pbr.slang`
   - [ ] Implement Fresnel (Schlick approximation)
   - [ ] Implement GGX microfacet distribution
   - [ ] Implement Smith G term (geometry function)

@@ -146,7 +146,7 @@ All projects using LUMA require these:
    - Asset loading (glTF, procedural generation)
    - Hot-reload (file watcher, async reloading)
    - Resource handle system (ID + generation counter for stale detection)
-   - Shader compilation (GLSL → SPIR-V via shaderc, disk caching)
+   - Shader compilation (Slang → SPIR-V via slangc CLI, disk caching)
 
 5. **Input** (`luma_input.dll`)
    - Keyboard/mouse input (event-based)
@@ -248,6 +248,7 @@ extern "C" {
 - Workgroup size: **128 threads** (2 wavefronts of 64)
 - 2D dispatch for image: **16×16 tiles** = 256 threads per workgroup (adjust for power-of-2)
 - Actually: **8×16 tiles** = 128 threads (matches wavefront)
+- Shader language: **Slang** (superior to GLSL, compiles to SPIR-V)
 
 ### BVH (Bounding Volume Hierarchy)
 
@@ -265,13 +266,13 @@ extern "C" {
 
 **Storage**:
 
-```glsl
-// GPU buffer layout
+```slang
+// GPU buffer layout (Slang syntax)
 struct BVHNode {
-  vec3 aabb_min;      // 12 bytes
-  uint left_child;    // 4 bytes (0xFFFFFFFF = leaf)
-  vec3 aabb_max;      // 12 bytes
-  uint right_child;   // 4 bytes
+  float3 aabb_min;      // 12 bytes
+  uint left_child;      // 4 bytes (0xFFFFFFFF = leaf)
+  float3 aabb_max;      // 12 bytes
+  uint right_child;     // 4 bytes
   // 32 bytes per node (cache-line friendly)
 };
 ```
@@ -560,19 +561,19 @@ scene:
    - Penetration depth = `-distance`
    - Collision normal = `normalize(gradient(sdf))`
 
-**SDF Functions** (GLSL + C++ mirror):
+**SDF Functions** (Slang + C++ mirror):
 
-```glsl
-float sdf_sphere(vec3 p, float radius) {
+```slang
+float sdf_sphere(float3 p, float radius) {
   return length(p) - radius;
 }
 
-float sdf_box(vec3 p, vec3 extents, float rounding) {
-  vec3 q = abs(p) - extents;
+float sdf_box(float3 p, float3 extents, float rounding) {
+  float3 q = abs(p) - extents;
   return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0) - rounding;
 }
 
-float sdf_plane(vec3 p, vec3 normal, float distance) {
+float sdf_plane(float3 p, float3 normal, float distance) {
   return dot(p, normal) + distance;
 }
 ```
@@ -749,7 +750,7 @@ if (ImGui::CollapsingHeader("Gameplay")) {
 
 - **Geometry**: Procedural SDFs (sphere, box, plane)
 - **Materials**: Code-defined PBR parameters
-- **Shaders**: GLSL compute shaders (path tracer, denoiser, tonemapper)
+- **Shaders**: Slang compute shaders (path tracer, denoiser, tonemapper)
 - **Scenes**: YAML scene files
 
 **Future**:
@@ -762,11 +763,18 @@ if (ImGui::CollapsingHeader("Gameplay")) {
 
 **Pipeline**:
 
-1. **Source**: GLSL shaders in `shaders/` folder
-2. **Compile**: GLSL → SPIR-V (using `shaderc` library at runtime)
+1. **Source**: Slang shaders in `shaders/` folder (`.slang` extension)
+2. **Compile**: Slang → SPIR-V (using `slangc` CLI tool, NOT C API due to stability)
 3. **Cache**: Save SPIR-V to disk (`shaders_cache/` folder) with hash
 4. **Load**: Check cache first, recompile only if source changed
 5. **Hot-Reload**: File watcher detects changes, triggers recompilation
+
+**Why Slang over GLSL**:
+- Superior type system and generics
+- Better error messages and tooling
+- Compiles to SPIR-V (Vulkan), DXIL (DirectX), Metal
+- Functional programming friendly (immutability, pure functions)
+- Latest version always preferred (bleeding edge > stability)
 
 **Compile Strategy**:
 
@@ -780,14 +788,15 @@ if (ImGui::CollapsingHeader("Gameplay")) {
 - Default: Load embedded shaders (release)
 - With `--external-shaders` flag: Load from `shaders/` folder (dev)
 - Debug builds: Default to external (easier iteration)
+- File extension: `.slang` (not `.comp`, `.glsl`, etc.)
 
 **Example Shaders**:
 
-- `path_tracer.comp`: Main path tracing kernel
-- `bvh_build.comp`: GPU BVH builder (future optimization)
-- `denoise_spatial.comp`: Spatial denoiser
-- `tonemap.comp`: Tonemapping + gamma correction
-- `accumulate.comp`: Temporal accumulation
+- `path_tracer.slang`: Main path tracing kernel
+- `bvh_build.slang`: GPU BVH builder (future optimization)
+- `denoise_spatial.slang`: Spatial denoiser
+- `tonemap.slang`: Tonemapping + gamma correction
+- `accumulate.slang`: Temporal accumulation
 
 ### Hot-Reload
 
@@ -804,7 +813,7 @@ if (ImGui::CollapsingHeader("Gameplay")) {
 
 **Hot-Reloadable Assets**:
 
-- Shaders ✅ (recompile, recreate pipelines)
+- Shaders ✅ (recompile Slang → SPIR-V, recreate pipelines)
 - Scenes ✅ (reload entities, rebuild BVH)
 - Settings ✅ (reload YAML, update runtime values)
 - Modules ✅ (unload DLL, reload, re-init)
@@ -1074,7 +1083,7 @@ luma/
 3. **GLM**: FetchContent (header-only math library)
 4. **ImGui**: FetchContent (docking branch for dockable windows)
 5. **GLFW**: find_package or FetchContent (window/input)
-6. **shaderc**: find_package (part of Vulkan SDK) or FetchContent
+6. **Slang**: Prebuilt binaries (v2024.14.4+), invoked via CLI (slangc.exe)
 7. **yaml-cpp**: FetchContent (YAML parsing)
 8. **Google Test**: FetchContent (unit testing)
 9. **stb_image** (future): FetchContent (header-only, texture loading)
@@ -1636,13 +1645,13 @@ luma/
 │   └── main.cpp (entry point for Pong)
 │
 ├── shaders/
-│   ├── path_tracer.comp
-│   ├── denoise_spatial.comp
-│   ├── tonemap.comp
+│   ├── path_tracer.slang
+│   ├── denoise_spatial.slang
+│   ├── tonemap.slang
 │   └── common/
-│       ├── sdf.glsl
-│       ├── bvh.glsl
-│       └── pbr.glsl
+│       ├── sdf.slang
+│       ├── bvh.slang
+│       └── pbr.slang
 │
 ├── shaders_cache/
 │   └── (SPIR-V cache, gitignored)
@@ -1687,7 +1696,7 @@ luma/
 | **Windowing** | GLFW | Lightweight, cross-platform |
 | **UI** | ImGui (docking branch) | Immediate-mode, dockable windows |
 | **Serialization** | yaml-cpp | Human-readable config/scenes |
-| **Shader Compiler** | shaderc | GLSL → SPIR-V at runtime |
+| **Shader Compiler** | Slang (slangc CLI) | Slang → SPIR-V via subprocess |
 | **Testing** | Google Test | Industry standard |
 | **Build** | CMake 3.20+ | Cross-platform, FetchContent |
 | **License** | GPL | Ethical code sharing 💜 |

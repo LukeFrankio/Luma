@@ -16,7 +16,7 @@ target_link_libraries(luma_asset
         luma_core
         ${Vulkan_LIBRARIES}
     PRIVATE
-        shaderc  # Link against FetchContent-built shaderc (MinGW-compatible)
+        slang  # Link against Slang (the SUPERIOR shader compiler uwu)
 )
 
 # Include Vulkan headers

@@ -1,9 +1,9 @@
 /**
  * @file test_gradient_compute.cpp
- * @brief Test gradient compute shader with pipeline and descriptor system
+ * @brief Test gradient compute shader with pipeline and descriptor system (Slang edition uwu)
  * 
  * This test verifies the complete compute pipeline workflow:
- * - Shader compilation (GLSL → SPIR-V)
+ * - Shader compilation (Slang → SPIR-V using Slang compiler)
  * - Pipeline creation with descriptor layouts
  * - Descriptor set allocation and binding
  * - Storage image creation
@@ -77,13 +77,13 @@ protected:
     }
     
     /**
-     * @brief Compiles gradient.comp shader to SPIR-V
+     * @brief Compiles gradient.slang shader to SPIR-V (using Slang compiler uwu)
      * 
      * @return SPIR-V bytecode or empty vector on failure
      */
     auto compile_gradient_shader() -> std::vector<u32> {
         // Path relative to build directory (where tests run from)
-        const std::filesystem::path shader_path = "../shaders/gradient.comp";
+        const std::filesystem::path shader_path = "../shaders/gradient.slang";
         
         if (!std::filesystem::exists(shader_path)) {
             LOG_ERROR("Shader file not found: {}", shader_path.string());
@@ -113,11 +113,11 @@ protected:
 
 /**
  * @test GradientComputeTest.CompileShader
- * @brief Test shader compilation of gradient.comp
+ * @brief Test shader compilation of gradient.slang (using Slang compiler uwu)
  * 
  * Verifies:
  * - Shader file exists
- * - Compilation succeeds
+ * - Slang compilation succeeds
  * - SPIR-V is non-empty
  * - SPIR-V has valid structure
  */
@@ -128,7 +128,7 @@ TEST_F(GradientComputeTest, CompileShader) {
     // SPIR-V is already in 32-bit words, so we just need to check it's non-empty
     ASSERT_GT(spirv.size(), 5) << "SPIR-V too small to be valid (needs header + instructions)";
     
-    LOG_INFO("Compiled gradient.comp successfully: {} words ({} bytes)", 
+    LOG_INFO("Compiled gradient.slang successfully with Slang: {} words ({} bytes)", 
              spirv.size(), spirv.size() * 4);
 }
 
@@ -216,10 +216,10 @@ TEST_F(GradientComputeTest, CreatePipelineAndDescriptors) {
 
 /**
  * @test GradientComputeTest.DispatchGradientShader
- * @brief Full end-to-end test of gradient compute shader
+ * @brief Full end-to-end test of gradient compute shader (Slang → SPIR-V → GPU)
  * 
  * This is the comprehensive test that exercises the entire compute pipeline:
- * 1. Compile gradient.comp shader
+ * 1. Compile gradient.slang shader with Slang compiler
  * 2. Create 1920x1080 storage image
  * 3. Create descriptor set layout and pipeline
  * 4. Allocate and bind descriptor set

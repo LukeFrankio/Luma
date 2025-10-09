@@ -1,21 +1,22 @@
 /**
  * @file gradient_visualizer.cpp
- * @brief Executable to visualize gradient compute shader output
+ * @brief Executable to visualize gradient compute shader output (Slang edition uwu)
  * 
  * This example:
  * 1. Initializes Vulkan (instance, device, allocator)
- * 2. Compiles gradient.comp shader to SPIR-V
+ * 2. Compiles gradient.slang shader to SPIR-V (using Slang compiler!)
  * 3. Creates storage image and compute pipeline
  * 4. Dispatches shader to generate red-to-green gradient
  * 5. Copies image data from GPU to CPU
  * 6. Saves result as PNG file (gradient_output.png)
  * 
- * ✨ PURE FUNCTIONS + IMPERATIVE SHELL ✨
+ * ✨ PURE FUNCTIONS + IMPERATIVE SHELL + SLANG SUPREMACY ✨
  * 
  * @author LukeFrankio
- * @date 2025-10-08
+ * @date 2025-10-09
  * 
  * @note Requires Vulkan 1.3+ and compute queue support
+ * @note Requires Slang compiler (slangc.exe) in PATH or build directory
  * @note Output resolution: 1920x1080 (R8G8B8A8_UNORM)
  * @note Generates gradient_output.png in current directory
  */
@@ -135,17 +136,17 @@ auto main() -> int {
     auto fence = std::move(*fence_result);
     LOG_INFO("✓ Fence created");
     
-    // Step 7: Compile gradient shader
-    LOG_INFO("Compiling gradient.comp shader...");
+    // Step 7: Compile gradient shader with Slang
+    LOG_INFO("Compiling gradient.slang shader with Slang compiler...");
     // Path relative to build/bin directory (where executable runs from)
     ShaderCompiler compiler("../../shaders", "../../shaders_cache");
-    auto shader_result = compiler.compile("gradient.comp", false);
+    auto shader_result = compiler.compile("gradient.slang", false);
     if (!shader_result) {
         LOG_ERROR("Failed to compile gradient shader");
         return EXIT_FAILURE;
     }
     const auto& shader_module = *shader_result;
-    LOG_INFO("✓ Shader compiled: {} SPIR-V words", shader_module.spirv.size());
+    LOG_INFO("✓ Slang shader compiled: {} SPIR-V words", shader_module.spirv.size());
     
     // Step 8: Create storage image (GPU-only)
     LOG_INFO("Creating {}x{} storage image...", WIDTH, HEIGHT);
@@ -381,7 +382,8 @@ auto main() -> int {
     
     LOG_INFO("✓ Saved gradient_output.png ({}x{} pixels)", WIDTH, HEIGHT);
     LOG_INFO("=== Success! ===");
-    LOG_INFO("Check gradient_output.png for red-to-green horizontal gradient uwu ✨");
+    LOG_INFO("Check gradient_output.png for red-to-green horizontal gradient");
+    LOG_INFO("Compiled with Slang - the SUPERIOR shader language uwu ✨");
     
     return EXIT_SUCCESS;
 }

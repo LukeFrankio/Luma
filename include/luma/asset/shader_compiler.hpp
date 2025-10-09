@@ -1,4 +1,5 @@
-// shader_compiler.hpp - GLSL to SPIR-V shader compilation with caching
+// shader_compiler.hpp - Slang shader compilation with caching
+// Slang > GLSL - cross-platform, generics, autodiff, the FUTURE! uwu ✨
 // Part of the LUMA Engine asset pipeline
 
 #pragma once
@@ -18,7 +19,7 @@ namespace luma::asset {
 /// Shader compilation error codes
 enum class ShaderError {
     FILE_NOT_FOUND,      ///< Shader source file does not exist
-    COMPILATION_FAILED,  ///< GLSL compilation failed (syntax/semantic error)
+    COMPILATION_FAILED,  ///< Slang compilation failed (syntax/semantic error)
     CACHE_READ_FAILED,   ///< Failed to read cached SPIR-V
     CACHE_WRITE_FAILED,  ///< Failed to write SPIR-V to cache
     INVALID_STAGE,       ///< Unknown shader stage (not .vert, .frag, .comp, etc.)
@@ -43,18 +44,24 @@ struct ShaderModule {
     u64 source_hash;                  ///< Hash of source file (for cache validation)
 };
 
-/// Compiler for GLSL shaders to SPIR-V, with disk caching and hot-reload support.
+/// Compiler for Slang shaders to SPIR-V, with disk caching and hot-reload support.
+///
+/// Slang is the SUPERIOR shader language - cross-platform (Vulkan/DirectX/Metal),
+/// generics, automatic differentiation, modules, compile-time execution. This is
+/// the future of GPU programming uwu ✨
 ///
 /// The shader compiler:
-/// - Compiles GLSL to SPIR-V using shaderc
+/// - Compiles Slang to SPIR-V using Slang compiler
+/// - Compiles GLSL to SPIR-V (Slang supports GLSL input too!)
+/// - Cross-platform: one source → Vulkan SPIR-V, DirectX DXIL, Metal
 /// - Caches compiled SPIR-V to disk (hashed by source content)
 /// - Automatically detects file changes for hot-reload
-/// - Supports all Vulkan shader stages (compute, vertex, fragment, etc.)
+/// - Supports all shader stages (compute, vertex, fragment, etc.)
 ///
 /// Example usage:
 /// @code
 /// ShaderCompiler compiler("shaders", "shaders_cache");
-/// auto result = compiler.compile("path_tracer.comp");
+/// auto result = compiler.compile("gradient.slang");  // Slang is the future!
 /// if (result) {
 ///     const auto& module = result.value();
 ///     // Create VkShaderModule from module.spirv
@@ -66,7 +73,7 @@ class ShaderCompiler {
 public:
     /// Construct a shader compiler with specified shader source and cache directories.
     ///
-    /// @param shader_dir Directory containing GLSL shader source files
+    /// @param shader_dir Directory containing Slang/GLSL shader source files
     /// @param cache_dir Directory for storing compiled SPIR-V bytecode
     ShaderCompiler(std::filesystem::path shader_dir, std::filesystem::path cache_dir);
 
@@ -78,15 +85,15 @@ public:
     ShaderCompiler(ShaderCompiler&&) = delete;
     ShaderCompiler& operator=(ShaderCompiler&&) = delete;
 
-    /// Compile a GLSL shader to SPIR-V, using cache if available and valid.
+    /// Compile a Slang/GLSL shader to SPIR-V, using cache if available and valid.
     ///
     /// This function:
     /// 1. Checks if cached SPIR-V exists and is valid (source hash matches)
     /// 2. If cache hit, loads SPIR-V from disk
-    /// 3. If cache miss, compiles GLSL to SPIR-V and writes to cache
+    /// 3. If cache miss, compiles Slang/GLSL to SPIR-V and writes to cache
     /// 4. Returns ShaderModule with SPIR-V bytecode
     ///
-    /// @param shader_path Relative path to shader file (e.g., "path_tracer.comp")
+    /// @param shader_path Relative path to shader file (e.g., "gradient.slang")
     /// @param force_recompile If true, ignore cache and recompile (for hot-reload)
     /// @return ShaderModule on success, ShaderError on failure
     [[nodiscard]] auto compile(std::string_view shader_path, bool force_recompile = false)
@@ -134,8 +141,8 @@ private:
     [[nodiscard]] static auto read_file(const std::filesystem::path& path)
         -> std::expected<std::string, ShaderError>;
 
-    /// Compile GLSL source to SPIR-V using shaderc.
-    [[nodiscard]] auto compile_glsl(std::string_view source, ShaderStage stage,
+    /// Compile Slang/GLSL source to SPIR-V using Slang compiler.
+    [[nodiscard]] auto compile_slang(std::string_view source, ShaderStage stage,
                                      std::string_view filename)
         -> std::expected<std::vector<u32>, ShaderError>;
 
@@ -148,7 +155,7 @@ private:
 
     std::filesystem::path shader_dir_; ///< Shader source directory
     std::filesystem::path cache_dir_;  ///< SPIR-V cache directory
-    void* compiler_impl_;              ///< Opaque pointer to shaderc compiler (pimpl)
+    void* compiler_impl_;              ///< Opaque pointer to Slang global session (pimpl)
 };
 
 } // namespace luma::asset

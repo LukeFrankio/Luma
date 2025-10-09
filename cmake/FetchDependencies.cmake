@@ -77,80 +77,53 @@ function(fetch_dependencies)
         GIT_SHALLOW TRUE
     )
     
-    # SPIRV-Headers (required by SPIRV-Tools)
+    # Slang - Modern shader compiler (GLSL/HLSL/Slang → SPIR-V/DXIL/Metal)
+    # The SUPERIOR shader language - cross-platform, generics, autodiff, modules!
+    # Using PREBUILT binaries to avoid dependency conflicts and faster builds!
+    # Building from source causes Vulkan::Headers conflicts and webgpu_dawn issues
     FetchContent_Declare(
-        spirv-headers
-        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Headers.git
-        GIT_TAG vulkan-sdk-1.3.290.0
-    )
-    
-    # SPIRV-Tools (required by shaderc)
-    set(SPIRV_HEADERS_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
-    set(SPIRV_HEADERS_SKIP_INSTALL ON CACHE BOOL "" FORCE)
-    
-    FetchContent_Declare(
-        spirv-tools
-        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Tools.git
-        GIT_TAG vulkan-sdk-1.3.290.0
-    )
-    
-    # glslang (required by shaderc)
-    FetchContent_Declare(
-        glslang
-        GIT_REPOSITORY https://github.com/KhronosGroup/glslang.git
-        GIT_TAG vulkan-sdk-1.3.290.0
-    )
-    
-    # shaderc - GLSL/HLSL to SPIR-V compiler (built from source for MinGW compatibility)
-    # Note: We build from source because Vulkan SDK's prebuilt libs are MSVC-only
-    set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
-    set(SHADERC_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
-    set(SHADERC_SKIP_INSTALL ON CACHE BOOL "" FORCE)
-    set(SHADERC_ENABLE_SHARED_CRT OFF CACHE BOOL "" FORCE)
-    
-    # Disable spirv-tools tests and install
-    set(SPIRV_SKIP_TESTS ON CACHE BOOL "" FORCE)
-    set(SPIRV_SKIP_EXECUTABLES ON CACHE BOOL "" FORCE)
-    set(SKIP_SPIRV_TOOLS_INSTALL ON CACHE BOOL "" FORCE)
-    
-    # Disable glslang tests and install
-    set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)
-    set(ENABLE_SPVREMAPPER OFF CACHE BOOL "" FORCE)
-    set(SKIP_GLSLANG_INSTALL ON CACHE BOOL "" FORCE)
-    set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-    
-    # Fetch shaderc (dependencies will be provided by the above FetchContent declarations)
-    FetchContent_Declare(
-        shaderc
-        GIT_REPOSITORY https://github.com/google/shaderc.git
-        GIT_TAG v2024.3
+        slang
+        URL https://github.com/shader-slang/slang/releases/download/v2024.14.4/slang-2024.14.4-windows-x86_64.zip
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
     
     # Make all dependencies available
     message(STATUS "Making dependencies available (this may take a while on first run)...")
     
-    # Fetch dependencies in order (shaderc dependencies first)
+    # Fetch dependencies (use MakeAvailable for everything, manual setup after)
     FetchContent_MakeAvailable(
         glm
         vma
         glfw
         yaml-cpp
-        spirv-headers
-        spirv-tools
-        glslang
-        shaderc
+        slang
     )
     
-    # Patch glslang SpvBuilder.h to add missing #include <cstdint>
-    set(SPV_BUILDER_H "${glslang_SOURCE_DIR}/SPIRV/SpvBuilder.h")
-    if(EXISTS "${SPV_BUILDER_H}")
-        file(READ "${SPV_BUILDER_H}" FILE_CONTENTS)
-        string(FIND "${FILE_CONTENTS}" "#include <cstdint>" ALREADY_PATCHED)
-        if(ALREADY_PATCHED EQUAL -1)
-            string(REPLACE "#include <stack>" "#include <stack>\n#include <cstdint>" FILE_CONTENTS "${FILE_CONTENTS}")
-            file(WRITE "${SPV_BUILDER_H}" "${FILE_CONTENTS}")
-            message(STATUS "Patched glslang SpvBuilder.h to add #include <cstdint>")
+    # Slang prebuilt binaries - manually create imported target (no CMakeLists.txt in prebuilt)
+    if(NOT TARGET slang_prebuilt)
+        message(STATUS "Slang prebuilt binaries at: ${slang_SOURCE_DIR}")
+        
+        # Create imported target for Slang prebuilt DLL
+        add_library(slang_prebuilt SHARED IMPORTED GLOBAL)
+        
+        # Set library location based on platform
+        if(WIN32)
+            set_target_properties(slang_prebuilt PROPERTIES
+                IMPORTED_LOCATION "${slang_SOURCE_DIR}/bin/slang.dll"
+                IMPORTED_IMPLIB "${slang_SOURCE_DIR}/lib/slang.lib"
+                INTERFACE_INCLUDE_DIRECTORIES "${slang_SOURCE_DIR}/include"
+            )
+        else()
+            message(FATAL_ERROR "Slang prebuilt binaries currently only configured for Windows")
         endif()
+        
+        # Create alias so we can use "slang" as target name
+        add_library(slang ALIAS slang_prebuilt)
+        
+        message(STATUS "Slang imported target created (prebuilt DLL)")
+        message(STATUS "  - DLL: ${slang_SOURCE_DIR}/bin/slang.dll")
+        message(STATUS "  - LIB: ${slang_SOURCE_DIR}/lib/slang.lib")
+        message(STATUS "  - Headers: ${slang_SOURCE_DIR}/include")
     endif()
     
     if(LUMA_BUILD_TESTS)
@@ -205,7 +178,7 @@ function(fetch_dependencies)
     if(LUMA_BUILD_TESTS)
         message(STATUS "Google Test: ${googletest_SOURCE_DIR}")
     endif()
-    message(STATUS "shaderc: ${shaderc_SOURCE_DIR} (built from source for MinGW)")
+    message(STATUS "Slang: ${slang_SOURCE_DIR} (the SUPERIOR shader compiler uwu)")
     message(STATUS "==========================")
     message(STATUS "")
 endfunction()

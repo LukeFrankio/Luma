@@ -1,9 +1,10 @@
-// shader_compiler.cpp - GLSL to SPIR-V shader compilation implementation
+// shader_compiler.cpp - Slang shader compilation implementation
+// Slang > GLSL - the SUPERIOR shader language uwu ✨
 
 #include <luma/asset/shader_compiler.hpp>
 #include <luma/core/logging.hpp>
 
-#include <shaderc/shaderc.hpp>
+#include <slang.h>
 
 #include <cstring>
 #include <fstream>
@@ -12,32 +13,38 @@
 
 namespace luma::asset {
 
-// Convert our ShaderStage enum to shaderc's shader kind
-static auto to_shaderc_kind(ShaderStage stage) -> shaderc_shader_kind {
+// Convert our ShaderStage enum to Slang's stage (currently unused - CLI tool doesn't need it)
+[[maybe_unused]] static auto to_slang_stage(ShaderStage stage) -> SlangStage {
     switch (stage) {
-    case ShaderStage::VERTEX: return shaderc_vertex_shader;
-    case ShaderStage::FRAGMENT: return shaderc_fragment_shader;
-    case ShaderStage::COMPUTE: return shaderc_compute_shader;
-    case ShaderStage::GEOMETRY: return shaderc_geometry_shader;
-    case ShaderStage::TESS_CONTROL: return shaderc_tess_control_shader;
-    case ShaderStage::TESS_EVALUATION: return shaderc_tess_evaluation_shader;
+    case ShaderStage::VERTEX: return SLANG_STAGE_VERTEX;
+    case ShaderStage::FRAGMENT: return SLANG_STAGE_FRAGMENT;
+    case ShaderStage::COMPUTE: return SLANG_STAGE_COMPUTE;
+    case ShaderStage::GEOMETRY: return SLANG_STAGE_GEOMETRY;
+    case ShaderStage::TESS_CONTROL: return SLANG_STAGE_HULL;
+    case ShaderStage::TESS_EVALUATION: return SLANG_STAGE_DOMAIN;
     }
-    return shaderc_compute_shader; // fallback
+    return SLANG_STAGE_COMPUTE; // fallback
 }
 
 ShaderCompiler::ShaderCompiler(std::filesystem::path shader_dir,
                                  std::filesystem::path cache_dir)
     : shader_dir_(std::move(shader_dir)), cache_dir_(std::move(cache_dir)),
-      compiler_impl_(new shaderc::Compiler()) {
+      compiler_impl_(nullptr) {
     // Create cache directory if it doesn't exist
     if (!std::filesystem::exists(cache_dir_)) {
         std::filesystem::create_directories(cache_dir_);
         LOG_INFO("Created shader cache directory: {}", cache_dir_.string());
     }
+    
+    // NOTE: We don't create a Slang session here anymore.
+    // Using slangc CLI tool as workaround for API initialization issues.
+    // The compiler_impl_ is kept as nullptr for now.
+    
+    LOG_INFO("Slang shader compiler initialized (using CLI tool)");
 }
 
 ShaderCompiler::~ShaderCompiler() {
-    delete static_cast<shaderc::Compiler*>(compiler_impl_);
+    // No cleanup needed when using CLI tool
 }
 
 auto ShaderCompiler::compile(std::string_view shader_path, bool force_recompile)
@@ -85,7 +92,7 @@ auto ShaderCompiler::compile(std::string_view shader_path, bool force_recompile)
     }
 
     // Cache miss or force recompile - compile from source
-    LOG_INFO("Compiling shader: {}", shader_path);
+    LOG_INFO("Compiling shader with Slang: {}", shader_path);
 
     // Read source file
     auto source_result = read_file(source_path);
@@ -94,8 +101,8 @@ auto ShaderCompiler::compile(std::string_view shader_path, bool force_recompile)
     }
     const auto& source = source_result.value();
 
-    // Compile GLSL to SPIR-V
-    auto spirv_result = compile_glsl(source, stage, shader_path);
+    // Compile Slang/GLSL to SPIR-V
+    auto spirv_result = compile_slang(source, stage, shader_path);
     if (!spirv_result) {
         return std::unexpected(spirv_result.error());
     }
@@ -106,12 +113,10 @@ auto ShaderCompiler::compile(std::string_view shader_path, bool force_recompile)
     if (cache_file) {
         cache_file.write(reinterpret_cast<const char*>(&source_hash), sizeof(source_hash));
         cache_file.write(reinterpret_cast<const char*>(spirv.data()),
-                          static_cast<std::streamsize>(spirv.size() * sizeof(u32)));
-        if (cache_file) {
-            LOG_DEBUG("Cached compiled shader: {}", cache_path.string());
-        } else {
-            LOG_WARN("Failed to write shader cache: {}", cache_path.string());
-        }
+                         static_cast<std::streamsize>(spirv.size() * sizeof(u32)));
+        LOG_INFO("Cached SPIR-V: {}", cache_path.string());
+    } else {
+        LOG_WARN("Failed to write shader cache: {}", cache_path.string());
     }
 
     return ShaderModule{
@@ -177,6 +182,15 @@ auto ShaderCompiler::deduce_stage(const std::filesystem::path& path)
     -> std::expected<ShaderStage, ShaderError> {
     const auto ext = path.extension().string();
 
+    // Slang extension (all stages)
+    if (ext == ".slang") {
+        // For .slang files, we need to parse for entry point attributes
+        // For now, default to compute (can be enhanced later)
+        // TODO: Parse [shader("compute")] attribute from source
+        return ShaderStage::COMPUTE;
+    }
+    
+    // GLSL extensions (Slang supports GLSL input!)
     if (ext == ".vert") return ShaderStage::VERTEX;
     if (ext == ".frag") return ShaderStage::FRAGMENT;
     if (ext == ".comp") return ShaderStage::COMPUTE;
@@ -192,6 +206,8 @@ auto ShaderCompiler::deduce_stage(const std::filesystem::path& path)
         if (stem == ".geom") return ShaderStage::GEOMETRY;
         if (stem == ".tesc") return ShaderStage::TESS_CONTROL;
         if (stem == ".tese") return ShaderStage::TESS_EVALUATION;
+        // Default to compute for unknown .spv files
+        return ShaderStage::COMPUTE;
     }
 
     LOG_ERROR("Unknown shader stage for file: {}", path.string());
@@ -233,32 +249,134 @@ auto ShaderCompiler::read_file(const std::filesystem::path& path)
     return buffer.str();
 }
 
-auto ShaderCompiler::compile_glsl(std::string_view source, ShaderStage stage,
-                                    std::string_view filename)
+auto ShaderCompiler::compile_slang(std::string_view source, ShaderStage /*stage*/,
+                                    std::string_view /*filename*/)
     -> std::expected<std::vector<u32>, ShaderError> {
-    auto* compiler = static_cast<shaderc::Compiler*>(compiler_impl_);
-
-    shaderc::CompileOptions options;
-    options.SetOptimizationLevel(shaderc_optimization_level_performance);
-    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
-    options.SetTargetSpirv(shaderc_spirv_version_1_6);
-
-    // Compile
-    const auto result = compiler->CompileGlslToSpv(
-        source.data(), source.size(), to_shaderc_kind(stage), filename.data(), options);
-
-    // Check for errors
-    if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-        LOG_ERROR("Shader compilation failed for {}: {}", filename,
-                        result.GetErrorMessage());
+    // WORKAROUND: Use slangc command-line compiler instead of API
+    // The Slang C++ API has issues with session creation that cause hangs.
+    // CLI tool works perfectly, so we'll use that until API is fixed.
+    //
+    // TODO: Investigate proper Slang API initialization sequence
+    // - Might need specific module loading order
+    // - Session creation hangs even with correct structure sizes
+    // - Could be related to COM interface threading model
+    
+    // Write source to temporary file
+    const auto temp_shader = cache_dir_ / "temp_shader.slang";
+    std::ofstream temp_file(temp_shader);
+    if (!temp_file) {
+        LOG_ERROR("Failed to create temporary shader file");
         return std::unexpected(ShaderError::COMPILATION_FAILED);
     }
-
-    // Extract SPIR-V
-    std::vector<u32> spirv(result.cbegin(), result.cend());
-    LOG_INFO("Successfully compiled {} ({} bytes SPIR-V)", filename,
-                   spirv.size() * sizeof(u32));
-
+    temp_file << source;
+    temp_file.close();
+    
+    // Output SPIR-V path
+    const auto temp_spirv = cache_dir_ / "temp_shader.spv";
+    
+    // Find slangc executable (it's in the Slang bin directory)
+    // We know it exists because we fetched Slang prebuilt
+    std::filesystem::path slangc_path;
+    
+    // Try to find slangc in common locations (work backwards from cache dir)
+    // Cache dir is typically build/shaders_cache
+    // Slang is at build/_deps/slang-src/bin/slangc.exe
+    auto search_base = cache_dir_.parent_path(); // build/
+    
+    std::vector<std::filesystem::path> possible_paths = {
+        search_base / "_deps/slang-src/bin/slangc.exe",  // From build dir
+        search_base.parent_path() / "build/_deps/slang-src/bin/slangc.exe",  // From project root
+        std::filesystem::current_path() / "_deps/slang-src/bin/slangc.exe",  // From CWD
+        "slangc.exe",  // In PATH (unlikely but worth trying)
+    };
+    
+    for (const auto& path : possible_paths) {
+        if (std::filesystem::exists(path)) {
+            slangc_path = std::filesystem::absolute(path);
+            break;
+        }
+    }
+    
+    if (slangc_path.empty()) {
+        LOG_ERROR("Could not find slangc executable! Searched:");
+        for (const auto& path : possible_paths) {
+            LOG_ERROR("  - {}", path.string());
+        }
+        return std::unexpected(ShaderError::COMPILATION_FAILED);
+    }
+    
+    LOG_INFO("Found slangc at: {}", slangc_path.string());
+    
+    // Build command: slangc -target spirv -profile glsl_460 input.slang -o output.spv
+    std::string command = slangc_path.string() + 
+        " -target spirv -profile glsl_460 \"" + temp_shader.string() + 
+        "\" -o \"" + temp_spirv.string() + "\" 2>&1";
+    
+    LOG_INFO("Compiling with Slang CLI: {}", command);
+    
+    // Execute command
+    FILE* pipe = _popen(command.c_str(), "r");
+    if (!pipe) {
+        LOG_ERROR("Failed to execute slangc");
+        return std::unexpected(ShaderError::COMPILATION_FAILED);
+    }
+    
+    // Read output
+    std::string output;
+    char buffer[256];
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        output += buffer;
+    }
+    
+    int exit_code = _pclose(pipe);
+    
+    if (exit_code != 0) {
+        LOG_ERROR("Slang compilation failed:\n{}", output);
+        return std::unexpected(ShaderError::COMPILATION_FAILED);
+    }
+    
+    if (!output.empty()) {
+        LOG_INFO("Slang compiler output:\n{}", output);
+    }
+    
+    // Read compiled SPIR-V
+    std::ifstream spirv_file(temp_spirv, std::ios::binary);
+    if (!spirv_file) {
+        LOG_ERROR("Failed to read compiled SPIR-V");
+        return std::unexpected(ShaderError::COMPILATION_FAILED);
+    }
+    
+    spirv_file.seekg(0, std::ios::end);
+    const auto file_size = spirv_file.tellg();
+    spirv_file.seekg(0, std::ios::beg);
+    
+    const auto spirv_size = static_cast<std::size_t>(file_size) / sizeof(u32);
+    std::vector<u32> spirv(static_cast<std::size_t>(spirv_size));
+    
+    spirv_file.read(reinterpret_cast<char*>(spirv.data()), file_size);
+    
+    if (!spirv_file) {
+        LOG_ERROR("Failed to read SPIR-V data");
+        spirv_file.close();  // Close before returning
+        return std::unexpected(ShaderError::COMPILATION_FAILED);
+    }
+    
+    spirv_file.close();  // IMPORTANT: Close before trying to delete!
+    
+    LOG_INFO("Slang compilation successful: {} SPIR-V words ({} bytes)",
+             spirv.size(), spirv.size() * 4);
+    
+    // Clean up temp files
+    std::error_code ec;
+    std::filesystem::remove(temp_shader, ec);
+    if (ec) {
+        LOG_WARN("Failed to remove temp shader file: {}", ec.message());
+    }
+    std::filesystem::remove(temp_spirv, ec);
+    if (ec) {
+        LOG_WARN("Failed to remove temp SPIR-V file: {}", ec.message());
+    }
+    
     return spirv;
 }
 

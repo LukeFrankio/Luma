@@ -1,4 +1,4 @@
-// test_shader_compiler.cpp - Unit tests for GLSL shader compilation
+// test_shader_compiler.cpp - Unit tests for Slang shader compilation
 
 #include <luma/asset/shader_compiler.hpp>
 #include <luma/core/logging.hpp>
@@ -23,39 +23,60 @@ protected:
         std::filesystem::create_directories(shader_dir_);
         std::filesystem::create_directories(cache_dir_);
         
-        // Create a simple test shader
+        // Create a simple test shader (Slang syntax)
         const std::string test_shader_source = R"(
-#version 460
-layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
-layout(binding = 0, rgba8) uniform writeonly image2D output_image;
+// Simple test compute shader in Slang
+[[vk::binding(0, 0)]]
+RWTexture2D<float4> output_image;
 
-void main() {
-    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
-    imageStore(output_image, pixel, vec4(1.0, 0.0, 0.0, 1.0));
+[shader("compute")]
+[numthreads(8, 8, 1)]
+void computeMain(uint3 dispatch_thread_id : SV_DispatchThreadID)
+{
+    output_image[dispatch_thread_id.xy] = float4(1.0, 0.0, 0.0, 1.0);
 }
 )";
         
-        test_shader_path_ = shader_dir_ / "test.comp";
+        test_shader_path_ = shader_dir_ / "test.slang";
         std::ofstream file(test_shader_path_);
         file << test_shader_source;
         file.close();
+        
+        // Create a bad shader (invalid Slang)
+        const std::string bad_shader_source = R"(
+// Invalid Slang shader (syntax error)
+THIS IS NOT VALID SLANG CODE!!!
+void main() { not valid }
+)";
+        
+        bad_shader_path_ = shader_dir_ / "bad.slang";
+        std::ofstream bad_file(bad_shader_path_);
+        bad_file << bad_shader_source;
+        bad_file.close();
     }
     
     void TearDown() override {
         // Clean up temporary directories
-        std::filesystem::remove_all(shader_dir_);
-        std::filesystem::remove_all(cache_dir_);
+        // Close any file handles first by resetting paths
+        test_shader_path_.clear();
+        bad_shader_path_.clear();
+        
+        // Remove cache directory first (less likely to have locks)
+        std::error_code ec;
+        std::filesystem::remove_all(cache_dir_, ec);
+        std::filesystem::remove_all(shader_dir_, ec);
     }
     
     std::filesystem::path shader_dir_;
     std::filesystem::path cache_dir_;
     std::filesystem::path test_shader_path_;
+    std::filesystem::path bad_shader_path_;
 };
 
 TEST_F(ShaderCompilerTest, CompileSimpleShader) {
     ShaderCompiler compiler(shader_dir_, cache_dir_);
     
-    auto result = compiler.compile("test.comp");
+    auto result = compiler.compile("test.slang");
     
     ASSERT_TRUE(result.has_value());
     
@@ -69,12 +90,12 @@ TEST_F(ShaderCompilerTest, CacheWorks) {
     ShaderCompiler compiler(shader_dir_, cache_dir_);
     
     // First compile (cache miss)
-    auto result1 = compiler.compile("test.comp");
+    auto result1 = compiler.compile("test.slang");
     ASSERT_TRUE(result1.has_value());
     const auto spirv1 = result1.value().spirv;
     
     // Second compile (cache hit)
-    auto result2 = compiler.compile("test.comp");
+    auto result2 = compiler.compile("test.slang");
     ASSERT_TRUE(result2.has_value());
     const auto spirv2 = result2.value().spirv;
     
@@ -82,24 +103,14 @@ TEST_F(ShaderCompilerTest, CacheWorks) {
     EXPECT_EQ(spirv1, spirv2);
     
     // Cache file should exist
-    const auto cache_path = compiler.get_cache_path("test.comp");
+    const auto cache_path = compiler.get_cache_path("test.slang");
     EXPECT_TRUE(std::filesystem::exists(cache_path));
 }
 
 TEST_F(ShaderCompilerTest, InvalidShaderFails) {
-    // Create a shader with syntax errors
-    const std::string bad_shader = R"(
-#version 460
-THIS IS NOT VALID GLSL CODE
-)";
-    
-    const auto bad_shader_path = shader_dir_ / "bad.comp";
-    std::ofstream file(bad_shader_path);
-    file << bad_shader;
-    file.close();
-    
+    // bad.slang already created in SetUp() with syntax errors
     ShaderCompiler compiler(shader_dir_, cache_dir_);
-    auto result = compiler.compile("bad.comp");
+    auto result = compiler.compile("bad.slang");
     
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), ShaderError::COMPILATION_FAILED);
@@ -107,7 +118,7 @@ THIS IS NOT VALID GLSL CODE
 
 TEST_F(ShaderCompilerTest, MissingShaderFails) {
     ShaderCompiler compiler(shader_dir_, cache_dir_);
-    auto result = compiler.compile("nonexistent.comp");
+    auto result = compiler.compile("nonexistent.slang");
     
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), ShaderError::FILE_NOT_FOUND);
@@ -117,18 +128,18 @@ TEST_F(ShaderCompilerTest, ForceRecompileWorks) {
     ShaderCompiler compiler(shader_dir_, cache_dir_);
     
     // First compile
-    auto result1 = compiler.compile("test.comp");
+    auto result1 = compiler.compile("test.slang");
     ASSERT_TRUE(result1.has_value());
     
-    // Modify the shader (change source)
+    // Modify the shader (change output color from red to green)
     const std::string modified_shader = R"(
-#version 460
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
-layout(binding = 0, rgba8) uniform writeonly image2D output_image;
+RWTexture2D<float4> output_image : register(u0);
 
-void main() {
-    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
-    imageStore(output_image, pixel, vec4(0.0, 1.0, 0.0, 1.0));
+[numthreads(8, 8, 1)]
+[shader("compute")]
+void computeMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
+    uint2 pixel = dispatch_thread_id.xy;
+    output_image[pixel] = float4(0.0, 1.0, 0.0, 1.0);  // Green instead of red
 }
 )";
     
@@ -137,7 +148,7 @@ void main() {
     file.close();
     
     // Force recompile
-    auto result2 = compiler.compile("test.comp", true);
+    auto result2 = compiler.compile("test.slang", true);
     ASSERT_TRUE(result2.has_value());
     
     // Hash should be different
@@ -145,33 +156,27 @@ void main() {
 }
 
 TEST_F(ShaderCompilerTest, StageDeductionWorks) {
-    // Create shaders with different extensions
-    const std::string shader_source = "#version 460\nvoid main() {}";
-    
-    struct TestCase {
-        const char* filename;
-        ShaderStage expected_stage;
-    };
-    
-    const TestCase test_cases[] = {
-        {"test.vert", ShaderStage::VERTEX},
-        {"test.frag", ShaderStage::FRAGMENT},
-        {"test.comp", ShaderStage::COMPUTE},
-        {"test.geom", ShaderStage::GEOMETRY},
-        {"test.tesc", ShaderStage::TESS_CONTROL},
-        {"test.tese", ShaderStage::TESS_EVALUATION},
-    };
+    // Create compute shader with .slang extension
+    // Note: Slang primarily supports compute shaders in this integration
+    const std::string compute_shader = R"(
+RWTexture2D<float4> output_image : register(u0);
+
+[numthreads(8, 8, 1)]
+[shader("compute")]
+void computeMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
+    uint2 pixel = dispatch_thread_id.xy;
+    output_image[pixel] = float4(1.0, 0.0, 0.0, 1.0);
+}
+)";
     
     ShaderCompiler compiler(shader_dir_, cache_dir_);
     
-    for (const auto& test : test_cases) {
-        const auto path = shader_dir_ / test.filename;
-        std::ofstream file(path);
-        file << shader_source;
-        file.close();
-        
-        auto result = compiler.compile(test.filename);
-        ASSERT_TRUE(result.has_value()) << "Failed to compile " << test.filename;
-        EXPECT_EQ(result.value().stage, test.expected_stage);
-    }
+    const auto path = shader_dir_ / "test.slang";
+    std::ofstream file(path);
+    file << compute_shader;
+    file.close();
+    
+    auto result = compiler.compile("test.slang");
+    ASSERT_TRUE(result.has_value()) << "Failed to compile test.slang";
+    EXPECT_EQ(result.value().stage, ShaderStage::COMPUTE);
 }

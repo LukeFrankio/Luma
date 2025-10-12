@@ -85,3 +85,9 @@ message(STATUS "Test sources: ${TEST_SOURCES}")
 
 add_subdirectory(scene)
 
+# ==============================================================================
+# Render module tests
+# ==============================================================================
+
+add_subdirectory(render)
+

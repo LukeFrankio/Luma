@@ -127,25 +127,80 @@ auto World::move_entity_to_archetype(Entity entity, u32 new_archetype_index) -> 
     const auto id = entity.id();
     auto& meta = entity_meta_[id - 1];  // Convert ID to index (IDs start at 1)
     
-    // Remove from old archetype (if in one)
+    Archetype* old_archetype = nullptr;
+    u32 old_entity_index = 0;
+    
+    // Get old archetype info before removing entity
     if (meta.archetype_index != INVALID_ARCHETYPE) {
-        auto& old_archetype = archetypes_[meta.archetype_index];
-        const auto swapped_entity = old_archetype->remove_entity(meta.entity_index);
+        old_archetype = archetypes_[meta.archetype_index].get();
+        old_entity_index = meta.entity_index;
+    }
+    
+    // Get new archetype
+    auto& new_archetype = archetypes_[new_archetype_index];
+    
+    // Add entity to new archetype first (to get the new index)
+    const auto new_index = new_archetype->add_entity(entity);
+    
+    // Copy component data from old to new archetype (before removing from old)
+    if (old_archetype) {
+        copy_components_to_archetype(entity, old_archetype, old_entity_index, new_archetype.get());
+    }
+    
+    // Remove from old archetype (after copying data)
+    if (old_archetype) {
+        const auto swapped_entity = old_archetype->remove_entity(old_entity_index);
         
         // Update swapped entity's metadata
         if (swapped_entity != NULL_ENTITY) {
             auto& swapped_meta = entity_meta_[swapped_entity.id() - 1];  // Convert ID to index
-            swapped_meta.entity_index = meta.entity_index;
+            swapped_meta.entity_index = old_entity_index;
         }
     }
-    
-    // Add to new archetype
-    auto& new_archetype = archetypes_[new_archetype_index];
-    const auto new_index = new_archetype->add_entity(entity);
     
     // Update metadata
     meta.archetype_index = new_archetype_index;
     meta.entity_index = new_index;
+}
+
+auto World::copy_components_to_archetype(
+    Entity entity,
+    Archetype* old_archetype,
+    u32 old_index,
+    Archetype* new_archetype
+) -> void {
+    const auto old_sig = old_archetype->signature();
+    const auto new_sig = new_archetype->signature();
+    
+    // For each component type, check if it exists in both archetypes
+    // If so, copy the data from old to new
+    
+    // Helper lambda to copy a component if it exists in both archetypes
+    auto copy_if_exists = [&]<typename T>(u32 comp_id) {
+        const ComponentSignature comp_bit = ComponentSignature(1) << comp_id;
+        
+        // Check if component exists in both old and new archetypes
+        if ((old_sig & comp_bit) && (new_sig & comp_bit)) {
+            // Get component from old archetype
+            if (const auto* old_comp = old_archetype->get_component<T>(comp_id, old_index)) {
+                // Ensure new archetype has component array
+                if (!new_archetype->has_component_array(comp_id)) {
+                    new_archetype->add_component_array<T>(comp_id);
+                }
+                
+                // Copy component data to new archetype
+                new_archetype->add_component<T>(comp_id, *old_comp);
+            }
+        }
+    };
+    
+    // Copy all known component types
+    // Note: Component IDs are assigned in order of first registration
+    copy_if_exists.template operator()<Transform>(World::component_id<Transform>());
+    copy_if_exists.template operator()<Geometry>(World::component_id<Geometry>());
+    copy_if_exists.template operator()<Material>(World::component_id<Material>());
+    copy_if_exists.template operator()<Velocity>(World::component_id<Velocity>());
+    copy_if_exists.template operator()<Name>(World::component_id<Name>());
 }
 
 // Template instantiations for all component types

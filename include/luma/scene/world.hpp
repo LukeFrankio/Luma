@@ -265,12 +265,32 @@ private:
     /**
      * @brief Move entity to different archetype
      * 
-     * ⚠️ IMPURE (modifies archetypes)
+     * ⚠️ IMPURE (modifies archetypes and metadata)
      * 
      * @param entity Entity to move
      * @param new_archetype_index Target archetype index
      */
     auto move_entity_to_archetype(Entity entity, u32 new_archetype_index) -> void;
+    
+    /**
+     * @brief Copy components from old archetype to new archetype
+     * 
+     * Helper for archetype migration - copies all component data that exists
+     * in both old and new archetypes.
+     * 
+     * ⚠️ IMPURE (modifies new archetype's component arrays)
+     * 
+     * @param entity Entity being moved
+     * @param old_archetype Source archetype
+     * @param old_index Entity index in old archetype
+     * @param new_archetype Destination archetype
+     */
+    auto copy_components_to_archetype(
+        Entity entity,
+        Archetype* old_archetype,
+        u32 old_index,
+        Archetype* new_archetype
+    ) -> void;
     
     /**
      * @brief Compute component signature for set of types
@@ -343,7 +363,7 @@ auto World::add_component(Entity entity, T component) -> void {
         new_archetype->add_component_array<T>(component_id<T>());
     }
     
-    // Move entity to new archetype (if needed)
+    // Move entity to new archetype (if needed) - this will copy existing components
     if (meta.archetype_index != new_archetype_idx) {
         move_entity_to_archetype(entity, new_archetype_idx);
     }

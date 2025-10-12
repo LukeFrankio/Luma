@@ -1,0 +1,67 @@
+# LUMA Scene Format (version 1)
+# Simple test scene with basic geometry
+version: 1
+
+entities:
+  # Sphere entity (ball)
+  - components:
+      Transform:
+        position: [0.0, 5.0, 0.0]
+        rotation: [1.0, 0.0, 0.0, 0.0]  # identity quaternion (w, x, y, z)
+        scale: [1.0, 1.0, 1.0]
+      
+      Geometry:
+        type: Sphere
+        radius: 1.0
+      
+      Material:
+        base_color: [1.0, 1.0, 1.0]
+        metallic: 0.0
+        roughness: 0.5
+        emissive_color: [0.1, 0.1, 0.1]
+      
+      Velocity:
+        linear: [2.0, -1.0, 0.0]
+        angular: [0.0, 0.0, 0.0]
+      
+      Name: "Ball"
+  
+  # Box entity (cube)
+  - components:
+      Transform:
+        position: [-5.0, 0.0, 0.0]
+        rotation: [1.0, 0.0, 0.0, 0.0]
+        scale: [1.0, 1.0, 1.0]
+      
+      Geometry:
+        type: Box
+        extents: [2.0, 2.0, 2.0]
+        rounding: 0.1
+      
+      Material:
+        base_color: [0.8, 0.2, 0.2]
+        metallic: 0.5
+        roughness: 0.3
+        emissive_color: [0.0, 0.0, 0.0]
+      
+      Name: "RedBox"
+  
+  # Plane entity (ground)
+  - components:
+      Transform:
+        position: [0.0, -10.0, 0.0]
+        rotation: [1.0, 0.0, 0.0, 0.0]
+        scale: [1.0, 1.0, 1.0]
+      
+      Geometry:
+        type: Plane
+        normal: [0.0, 1.0, 0.0]
+        distance: 0.0
+      
+      Material:
+        base_color: [0.5, 0.5, 0.5]
+        metallic: 0.0
+        roughness: 0.8
+        emissive_color: [0.0, 0.0, 0.0]
+      
+      Name: "Ground"

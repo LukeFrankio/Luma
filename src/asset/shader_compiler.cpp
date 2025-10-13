@@ -307,9 +307,11 @@ auto ShaderCompiler::compile_slang(std::string_view source, ShaderStage /*stage*
     
     LOG_INFO("Found slangc at: {}", slangc_path.string());
     
-    // Build command: slangc -target spirv -profile glsl_460 input.slang -o output.spv
+    // Build command: slangc -target spirv -profile glsl_460 -I<shader_dir> input.slang -o output.spv
     std::string command = slangc_path.string() + 
-        " -target spirv -profile glsl_460 \"" + temp_shader.string() + 
+        " -target spirv -profile glsl_460" +
+        " -I\"" + shader_dir_.string() + "\"" +
+        " \"" + temp_shader.string() + 
         "\" -o \"" + temp_spirv.string() + "\" 2>&1";
     
     LOG_INFO("Compiling with Slang CLI: {}", command);

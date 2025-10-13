@@ -3,104 +3,78 @@
 version: 1
 
 entities:
-  # Ball (sphere with velocity)
-  - components:
-      Transform:
-        position: [0.0, 0.0, 0.0]
-        rotation: [1.0, 0.0, 0.0, 0.0]
-        scale: [1.0, 1.0, 1.0]
-      
-      Geometry:
-        type: Sphere
-        radius: 0.5
-      
-      Material:
-        base_color: [1.0, 1.0, 1.0]
-        metallic: 0.0
-        roughness: 0.5
-        emissive_color: [0.1, 0.1, 0.1]  # slight glow
-      
-      Velocity:
-        linear: [5.0, 3.0, 0.0]
-      
-      Name: "Ball"
+  # Ball
+  - Transform:
+      position: [0.0, 0.0, 0.0]
+      rotation: [1.0, 0.0, 0.0, 0.0]
+      scale: [1.0, 1.0, 1.0]
+    Geometry:
+      type: Sphere
+      radius: 0.5
+    Material:
+      base_color: [1.0, 1.0, 1.0]
+      metallic: 0.0
+      roughness: 0.5
+      emissive_color: [0.1, 0.1, 0.1]
+    Velocity:
+      linear: [5.0, 3.0, 0.0]
   
   # Left paddle (blue)
-  - components:
-      Transform:
-        position: [-15.0, 0.0, 0.0]
-        rotation: [1.0, 0.0, 0.0, 0.0]
-        scale: [1.0, 1.0, 1.0]
-      
-      Geometry:
-        type: Box
-        extents: [0.5, 4.0, 0.5]
-        rounding: 0.2
-      
-      Material:
-        base_color: [0.2, 0.6, 1.0]
-        metallic: 0.5
-        roughness: 0.3
-        emissive_color: [0.0, 0.0, 0.0]
-      
-      Name: "LeftPaddle"
+  - Transform:
+      position: [-15.0, 0.0, 0.0]
+      rotation: [1.0, 0.0, 0.0, 0.0]
+      scale: [1.0, 1.0, 1.0]
+    Geometry:
+      type: Box
+      extents: [0.5, 4.0, 0.5]
+      rounding: 0.2
+    Material:
+      base_color: [0.2, 0.6, 1.0]
+      metallic: 0.5
+      roughness: 0.3
+      emissive_color: [0.0, 0.0, 0.0]
   
   # Right paddle (red)
-  - components:
-      Transform:
-        position: [15.0, 0.0, 0.0]
-        rotation: [1.0, 0.0, 0.0, 0.0]
-        scale: [1.0, 1.0, 1.0]
-      
-      Geometry:
-        type: Box
-        extents: [0.5, 4.0, 0.5]
-        rounding: 0.2
-      
-      Material:
-        base_color: [1.0, 0.2, 0.2]
-        metallic: 0.5
-        roughness: 0.3
-        emissive_color: [0.0, 0.0, 0.0]
-      
-      Name: "RightPaddle"
+  - Transform:
+      position: [15.0, 0.0, 0.0]
+      rotation: [1.0, 0.0, 0.0, 0.0]
+      scale: [1.0, 1.0, 1.0]
+    Geometry:
+      type: Box
+      extents: [0.5, 4.0, 0.5]
+      rounding: 0.2
+    Material:
+      base_color: [1.0, 0.2, 0.2]
+      metallic: 0.5
+      roughness: 0.3
+      emissive_color: [0.0, 0.0, 0.0]
   
   # Top boundary
-  - components:
-      Transform:
-        position: [0.0, 10.0, 0.0]
-        rotation: [1.0, 0.0, 0.0, 0.0]
-        scale: [1.0, 1.0, 1.0]
-      
-      Geometry:
-        type: Plane
-        normal: [0.0, -1.0, 0.0]  # facing down
-        distance: 0.0
-      
-      Material:
-        base_color: [0.3, 0.3, 0.3]
-        metallic: 0.0
-        roughness: 0.9
-        emissive_color: [0.0, 0.0, 0.0]
-      
-      Name: "TopBoundary"
+  - Transform:
+      position: [0.0, 10.0, 0.0]
+      rotation: [1.0, 0.0, 0.0, 0.0]
+      scale: [1.0, 1.0, 1.0]
+    Geometry:
+      type: Plane
+      normal: [0.0, -1.0, 0.0]
+      distance: 0.0
+    Material:
+      base_color: [0.3, 0.3, 0.3]
+      metallic: 0.0
+      roughness: 0.9
+      emissive_color: [0.0, 0.0, 0.0]
   
   # Bottom boundary
-  - components:
-      Transform:
-        position: [0.0, -10.0, 0.0]
-        rotation: [1.0, 0.0, 0.0, 0.0]
-        scale: [1.0, 1.0, 1.0]
-      
-      Geometry:
-        type: Plane
-        normal: [0.0, 1.0, 0.0]  # facing up
-        distance: 0.0
-      
-      Material:
-        base_color: [0.3, 0.3, 0.3]
-        metallic: 0.0
-        roughness: 0.9
-        emissive_color: [0.0, 0.0, 0.0]
-      
-      Name: "BottomBoundary"
+  - Transform:
+      position: [0.0, -10.0, 0.0]
+      rotation: [1.0, 0.0, 0.0, 0.0]
+      scale: [1.0, 1.0, 1.0]
+    Geometry:
+      type: Plane
+      normal: [0.0, 1.0, 0.0]
+      distance: 0.0
+    Material:
+      base_color: [0.3, 0.3, 0.3]
+      metallic: 0.0
+      roughness: 0.9
+      emissive_color: [0.0, 0.0, 0.0]

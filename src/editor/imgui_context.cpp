@@ -252,6 +252,7 @@ auto ImGuiContext::create(
         }
     };
     
+    // Initialize with render pass (backend will create pipeline automatically)
     if (!ImGui_ImplVulkan_Init(&init_info)) {
         vkDestroyRenderPass(device.handle(), render_pass, nullptr);
         vkDestroyDescriptorPool(device.handle(), descriptor_pool, nullptr);
@@ -262,6 +263,13 @@ auto ImGuiContext::create(
             "Failed to initialize ImGui Vulkan backend"
         });
     }
+    
+    // Create main pipeline for rendering
+    ImGui_ImplVulkan_PipelineInfo pipeline_info{};
+    pipeline_info.RenderPass = render_pass;
+    pipeline_info.Subpass = 0;
+    pipeline_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    ImGui_ImplVulkan_CreateMainPipeline(&pipeline_info);
     
     LOG_INFO("ImGui context created successfully");
     LOG_INFO("ImGui version: {}", IMGUI_VERSION);
